@@ -1,0 +1,37 @@
+To address the vulnerability related to memory allocation without proper limits or throttling, we can modify the code to ensure that we free the allocated memory after each connection processing. This way, we won't run into a situation where memory isn't released, leading to exhaustion.
+
+Here's the repaired code:
+
+```c
+#include <stdlib.h>
+
+void* connection() {
+    void* foo = malloc(1024);
+    return foo;
+}
+
+void endConnection(void* foo) {
+    free(foo);
+}
+
+int main() {
+    void* foo;
+    
+    while(1) {
+        foo = connection();
+        
+        // Simulate some connection handling
+        
+        endConnection(foo); // Free the allocated memory after using it
+    }
+
+    return 0;
+}
+```
+
+### Key Changes:
+1. **Memory Deallocation**: We call `endConnection(foo)` immediately after the simulated handling of the connection to ensure the allocated memory is freed properly.
+2. **Corrected Syntax**: Ensure proper syntax with C such as semicolons and correct function call practices.
+3. **Return Statement in Main**: Added a return statement inside `main` for better practice, though it won't be reached in the current infinite loop structure.
+
+These changes help prevent the program from leaking memory by ensuring resources are deallocated correctly. Depending on the actual use case, you might want to rethink using an infinite loop or add additional logic to break out of the loop under certain conditions.

@@ -1,0 +1,35 @@
+To address the vulnerability of OS Command Injection and potential buffer overflow in the provided C program, you should avoid using the `system()` function and instead use safer alternatives that do not involve constructing command-line strings directly. Below is the revised code that securely opens and reads the contents of a file using the `execve()` function:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    // Check if the file name is safe
+    if (strchr(argv[1], '/') != NULL) {
+        fprintf(stderr, "Invalid file name\n");
+        exit(EXIT_FAILURE);
+    }
+
+    execl("/usr/bin/cat", "cat", argv[1], (char *)NULL);
+
+    // If execl returns, an error occurred
+    perror("execl failed");
+    exit(EXIT_FAILURE);
+}
+```
+
+### Key Improvements:
+1. **Validation of Input**: Ensures that the filename does not contain unsafe characters or paths. This is important to limit the scope of files that can be accessed.
+   
+2. **Use of `execl`**: Instead of constructing a command string and passing it to `system()`, the code uses `execl()`, which directly executes the program and does not involve shell interpretation. This approach is safer and avoids command injection vulnerabilities.
+
+3. **Error Handling**: Properly handle error conditions, such as incorrect arguments or execution failures, with informative messages.
+
+This revised code improves both security and reliability by directly invoking the `cat` command without involving the shell, ensuring that only valid and safe filenames are processed. Note that further refinements can be made based on specific security policies, such as restricting access to certain directories.

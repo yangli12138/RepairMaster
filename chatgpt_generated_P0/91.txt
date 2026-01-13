@@ -1,0 +1,20 @@
+To fix the off-by-one error in the provided code, we need to ensure that the formatted string fits within the allocated space, including space for the null terminator. We can achieve this by either using a safe alternative to `sprintf` that limits the number of characters written or by adjusting the array size. Here’s one way to address the vulnerability by using `snprintf`:
+
+```c
+#include <stdio.h>
+
+int saveFormattedFilenameToDB(const char *name);
+
+int setFilename(const char *filename) {
+    char name[21];  // Increase size to 21 to include space for the null terminator.
+    snprintf(name, sizeof(name), "%.16s.dat", filename);  // Use "%.16s" to safely truncate the filename to 16 characters.
+    int success = saveFormattedFilenameToDB(name);
+    return success;
+}
+```
+
+### Key Changes Made:
+1. **Increased Buffer Size**: Changed the `name` array size to 21 to allow for the `.dat` extension and the null terminator safely.
+2. **Used snprintf**: Utilized `snprintf` instead of `sprintf` to safely perform formatted output, specifying the maximum allowable size. The use of `"%.16s"` ensures that the filename is truncated to a maximum of 16 characters if it is longer.
+  
+These changes protect against off-by-one errors and potential buffer overflows.

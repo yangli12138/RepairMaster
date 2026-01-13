@@ -1,0 +1,47 @@
+To address the vulnerability of integer overflow, we should ensure that the `bytesRec` variable does not exceed its maximum possible value for `short int` and does not exceed the size of the buffer. Here is a repaired version of the code:
+
+```c
+#include <limits.h> // For SHRT_MAX
+
+short int bytesRec = 0;
+char buf[SOMEBIGNUM];
+
+// Ensure that SOMEBIGNUM is greater than or equal to MAXGET
+// to prevent buffer overflow.
+
+// Optional: Check that MAXGET doesn't exceed SOMEBIGNUM or SHRT_MAX
+// to ensure safety within bounds.
+
+while(bytesRec < MAXGET) {
+    int bytesRead = getFromInput(buf + bytesRec);
+
+    // Check for potential error in reading input
+    if (bytesRead < 0) {
+        // Handle the error appropriately, such as by logging or returning an error code
+        break;
+    }
+
+    // Check whether adding `bytesRead` to `bytesRec` would cause overflow
+    if (bytesRec > SHRT_MAX - bytesRead) {
+        // Handle overflow - potentially throw an error or handle it gracefully
+        // to ensure bytesRec doesn't overflow
+        break;
+    }
+
+    // Safely add bytesRead to bytesRec
+    bytesRec += bytesRead;
+
+    // Additionally, ensure bytesRec does not exceed SOMEBIGNUM
+    if (bytesRec >= SOMEBIGNUM) {
+        // Handle situation appropriately, such as stopping further input 
+        break;
+    }
+}
+```
+
+In this repaired code:
+
+1. We include the `limits.h` header to use `SHRT_MAX`, which gives us the maximum value for a `short int`.
+2. We handle potential errors from the `getFromInput` function by checking if `bytesRead` is negative.
+3. Before adding `bytesRead` to `bytesRec`, we check if this addition would lead to an overflow using `SHRT_MAX`.
+4. We check that `bytesRec` does not exceed the buffer size, `SOMEBIGNUM`. This ensures the code does not write beyond the bounds of the `buf` array.

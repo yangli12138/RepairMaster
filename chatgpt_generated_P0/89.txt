@@ -1,0 +1,24 @@
+To address the off-by-one vulnerability in the code, we need to ensure that each call to `strncat()` preserves room for the terminating null character in the `fullname` buffer. Here's the corrected code:
+
+```c
+#include <string.h>
+
+char firstname[20];
+char lastname[20];
+char fullname[40];
+
+// Initialize the fullname buffer
+fullname[0] = '\0';
+
+// Append the firstname to fullname, ensuring space for null character
+strncat(fullname, firstname, sizeof(fullname) - strlen(fullname) - 1);
+
+// Append the lastname to fullname, ensuring space for null character
+strncat(fullname, lastname, sizeof(fullname) - strlen(fullname) - 1);
+```
+
+### Key Changes:
+- We now pass `sizeof(fullname) - strlen(fullname) - 1` as the third argument to `strncat()`. This is the correct way to ensure that the concatenation does not exceed the buffer size and always leaves space for the terminating null character.
+- Always keep track of the remaining buffer space by subtracting the current length of `fullname` and an additional 1 for the null terminator when calling `strncat()`.
+
+This approach guarantees that we never write beyond the bounds of the `fullname` buffer, avoiding the off-by-one error.

@@ -1,0 +1,34 @@
+To address the buffer over-read vulnerability, we need to ensure that the user's input is within the valid bounds of the array. We can add checks to verify that the user's selected index is both positive and does not exceed the number of available items. Here's the revised code:
+
+```c
+#include <stdio.h>
+
+int GetUntrustedOffset();
+
+int main (int argc, char **argv) {
+    char *items[] = {"boat", "car", "truck", "train"};
+    int num_items = sizeof(items) / sizeof(items[0]);
+    int index = GetUntrustedOffset();
+
+    // Check if the index is within the valid range
+    if (index > 0 && index <= num_items) {
+        printf("You selected %s\n", items[index-1]);
+    } else {
+        printf("Invalid selection.\n");
+    }
+
+    return 0;
+}
+
+int GetUntrustedOffset() {
+    int offset;
+    printf("Enter an offset (1 to %lu): ", sizeof(items)/sizeof(items[0]));
+    scanf("%d", &offset);
+    return offset;
+}
+```
+
+### Explanation:
+1. **Boundary Check**: We check if the entered `index` is greater than 0 and less than or equal to the total number of items (`num_items`). This prevents both negative indices and indices that exceed the bounds.
+2. **Feedback**: If the user enters an invalid index, the program informs them by printing "Invalid selection."
+3. **Robustness**: It's important to note this basic implementation. Consider implementing additional robustness measures such as input sanitation, error handling, and more sophisticated user input management as needed in a real-world scenario.

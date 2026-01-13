@@ -1,0 +1,15 @@
+numpy
+torch
+gdown
+peft
+faiss-cpu
+transformers==4.16.0
+tensorboard
+tree-sitter
+wandb>=0.12.21
+SentencePiece
+openai
+seaborn
+matplotlib
+pandas
+codebleu

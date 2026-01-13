@@ -1,0 +1,63 @@
+To address the double-free vulnerability in the provided code, we need to ensure that each allocated memory block is freed only once. This can be done by setting pointers to `NULL` after they are freed or by ensuring that multiple frees do not occur on the same pointer. Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define BUFSIZE1 512
+#define BUFSIZE2 ((BUFSIZE1/2) - 8)
+
+int main(int argc, char **argv) {
+    char *buf1R1;
+    char *buf2R1;
+    char *buf1R2;
+
+    // Allocate memory
+    buf1R1 = (char *) malloc(BUFSIZE2);
+    if (buf1R1 == NULL) {
+        perror("Failed to allocate memory for buf1R1");
+        exit(EXIT_FAILURE);
+    }
+
+    buf2R1 = (char *) malloc(BUFSIZE2);
+    if (buf2R1 == NULL) {
+        perror("Failed to allocate memory for buf2R1");
+        free(buf1R1);
+        exit(EXIT_FAILURE);
+    }
+
+    // Free allocated memory
+    free(buf1R1);
+    buf1R1 = NULL; // Set the pointer to NULL after free
+
+    free(buf2R1);
+    buf2R1 = NULL; // Set the pointer to NULL after free
+
+    // Allocate memory again
+    buf1R2 = (char *) malloc(BUFSIZE1);
+    if (buf1R2 == NULL) {
+        perror("Failed to allocate memory for buf1R2");
+        exit(EXIT_FAILURE);
+    }
+
+    // Copy input into buf1R2 with safety bounds check
+    strncpy(buf1R2, argv[1], BUFSIZE1-1);
+    buf1R2[BUFSIZE1-1] = '\0'; // Ensure null-termination
+
+    // Free allocated memory
+    free(buf1R2);
+    buf1R2 = NULL; // Set the pointer to NULL after free
+
+    return 0;
+}
+```
+
+Here's what was changed:
+
+1. Added error checking for `malloc` calls to ensure robustness and handle allocation failures.
+2. Freed each allocated memory only once by ensuring pointers are set to `NULL` after they're freed.
+3. Ensured null-termination of strings copied with `strncpy`.
+
+These changes prevent potential misuse of double freeing and increase the safety of memory operations in the code.

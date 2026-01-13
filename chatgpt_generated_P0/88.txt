@@ -1,0 +1,69 @@
+To address the vulnerability of an off-by-one error when allocating space for the WidgetList, we need to allocate space for one additional element to store the NULL pointer. Here's the corrected code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_NUM_WIDGETS 1000 // Example maximum, adjust as needed
+
+typedef struct {
+    // Define your widget structure here
+} Widget;
+
+// Placeholder function definitions
+unsigned int GetUntrustedSizeValue() {
+    // Implement your logic to get an untrusted size value here
+    return 0;
+}
+
+void ExitError(const char *message) {
+    perror(message);
+    exit(EXIT_FAILURE);
+}
+
+Widget* InitializeWidget() {
+    // Implement widget initialization
+    return NULL;
+}
+
+void showWidgets(Widget **widgetsList) {
+    // Implement display functionality
+}
+
+int main() {
+    int i;
+    unsigned int numWidgets;
+    Widget **WidgetList;
+
+    numWidgets = GetUntrustedSizeValue();
+    if ((numWidgets == 0) || (numWidgets > MAX_NUM_WIDGETS)) {
+        ExitError("Incorrect number of widgets requested!");
+    }
+
+    // Allocate memory including an extra space for the NULL pointer
+    WidgetList = (Widget **)malloc((numWidgets + 1) * sizeof(Widget *));
+    if (WidgetList == NULL) {
+        ExitError("Memory allocation failed!");
+    }
+    
+    printf("WidgetList ptr=%p\n", WidgetList);
+
+    for (i = 0; i < numWidgets; i++) {
+        WidgetList[i] = InitializeWidget();
+    }
+    
+    WidgetList[numWidgets] = NULL; // NULL-terminate the list
+
+    showWidgets(WidgetList);
+
+    // Free allocated memory after use
+    free(WidgetList);
+
+    return 0;
+}
+```
+
+### Key changes:
+1. Allocation includes one extra slot `malloc((numWidgets + 1) * sizeof(Widget *))` to store the NULL pointer.
+2. Added a check to verify the result of `malloc` to ensure it succeeded.
+3. Included a proper cleanup procedure (`free(WidgetList)`) to prevent memory leaks.

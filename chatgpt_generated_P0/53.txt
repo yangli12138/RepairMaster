@@ -1,0 +1,39 @@
+To address the command injection vulnerability in your code, the best approach is to avoid using the `system` function for executing shell commands. Instead, directly use safer functions like `execvp`, which do not involve the shell and thus don't interpret special characters like `;` and `&`, reducing security risks.
+
+Here is the repaired version of the code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+        return 1;
+    }
+
+    // Ensure the filename does not contain any special shell characters
+    if (strpbrk(argv[1], "&;|><") != NULL) {
+        fprintf(stderr, "Invalid filename. Special characters are not allowed.\n");
+        return 1;
+    }
+
+    // Use execvp to directly execute the cat command
+    char *args[] = {"cat", argv[1], NULL};
+    if (execvp("cat", args) == -1) {
+        perror("Failed to execute cat");
+        return 1;
+    }
+
+    return 0;
+}
+```
+
+### Improvements made:
+1. **Input Validation**: Added a check to ensure the provided file name does not include special characters that can be used for command injection.
+2. **Direct Execution**: Replaced the `system` call with `execvp`, using an argument array to pass the command and its arguments. This method prevents shell interpretation and execution of arbitrary commands.
+3. **Error Handling**: Added error output statements to handle incorrect usage and potential failures of command execution.
+
+This approach enhances security by tightly controlling the execution environment and preventing manipulation by user input.

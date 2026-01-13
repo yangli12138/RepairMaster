@@ -1,0 +1,68 @@
+Certainly! Below is the repaired code that incorporates a counter to limit the number of attempts to establish a connection to the server, thus preventing an infinite loop.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define MAX_ATTEMPTS 5  // Define a maximum number of connection attempts
+
+int processMessagesFromServer(char *hostaddr, int port) {
+    int servsock;
+    int connected;
+    int count = 0;  // Initialize the counter for attempts
+    struct sockaddr_in servaddr;
+
+    // Create socket to connect to server
+    servsock = socket(AF_INET, SOCK_STREAM, 0);
+    if (servsock < 0) {
+        perror("Socket creation failed");
+        return -1;
+    }
+
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(port);
+    servaddr.sin_addr.s_addr = inet_addr(hostaddr);
+
+    do {
+        // Establish connection to server
+        connected = connect(servsock, (struct sockaddr *)&servaddr, sizeof(servaddr));
+        
+        // Increment counter
+        count++;
+
+        // If connected then read and process messages from server
+        if (connected > -1) {
+            // Read and process messages
+            // ...
+
+            // Break out of loop if processing is done
+            break;
+        } else {
+            perror("Connection attempt failed");
+        }
+
+        // If the maximum number of attempts is reached, log and return failure
+        if (count >= MAX_ATTEMPTS) {
+            fprintf(stderr, "Maximum connection attempts reached. Exiting.\n");
+            close(servsock);
+            return -1;
+        }
+
+    } while (connected < 0);
+
+    // Close socket and return success
+    close(servsock);
+    return 0;
+}
+```
+
+### Key Improvements:
+1. **Counter Limit**: A counter has been included that limits the connection attempts to `MAX_ATTEMPTS` to avoid potential infinite loops and resource exhaustion.
+2. **Error Handling**: Error messages are printed to standard error using `perror` or `fprintf` when socket creation or connection attempts fail. This aids in debugging and understanding the failure points.
+3. **Socket Cleanup**: The socket is closed before exiting the function to ensure resources are freed appropriately.
+
+This code now safely limits the attempts to connect to the server and handles errors properly, mitigating the risk of a denial of service through an infinite loop.

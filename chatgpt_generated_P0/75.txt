@@ -1,0 +1,22 @@
+To address the integer underflow vulnerability in the given code, you should add a check before the subtraction operation to ensure that it doesn't lead to underflow. Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <stdbool.h>
+
+int main(void) {
+    int i;
+    i = -2147483648;
+
+    // Check to prevent integer underflow
+    if (i > -2147483648) {
+        i = i - 1;
+    } else {
+        printf("Integer underflow prevented: i is already at the minimum value.\n");
+    }
+
+    return 0;
+}
+```
+
+In this fixed version of the code, before performing the subtraction, we check if `i` is greater than the minimum value a 32-bit signed integer can hold. If it's not, we avoid performing the subtraction and print a warning message instead. This prevents integer underflow and ensures the program executes safely.

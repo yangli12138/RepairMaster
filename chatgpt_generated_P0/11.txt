@@ -1,0 +1,51 @@
+To address the buffer underwrite vulnerability in the `trimTrailingWhitespace` function, we need to ensure that we do not access memory before the start of the `message` buffer. This can be achieved by adding a boundary check to the while loop. Additionally, ensure that dynamically allocated memory is used correctly without shadowing the allocation by a local buffer. Here's the corrected code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+char* trimTrailingWhitespace(char *strMessage, int length) { 
+    char *retMessage; 
+    char *message = malloc(sizeof(char) * (length + 1));
+    if (message == NULL) {
+        return NULL; // failed allocation
+    }
+
+    // Copy input string to a temporary string
+    int index;
+    for (index = 0; index < length; index++) {
+        message[index] = strMessage[index];
+    }
+    message[index] = '\0';
+
+    // Trim trailing whitespace
+    int len = index - 1;
+    while (len >= 0 && isspace((unsigned char)message[len])) {
+        message[len] = '\0';
+        len--;
+    }
+
+    // Return string without trailing whitespace, free the redundant allocation
+    retMessage = realloc(message, len + 2);
+    if (retMessage == NULL){
+        // If reallocation fails, we should return the original pointer
+        return message;
+    }
+    return retMessage;
+}
+
+int main() {
+    char text[] = "Hello, World!     ";
+    char *trimmed = trimTrailingWhitespace(text, sizeof(text) - 1);
+    printf("Trimmed string: \"%s\"\n", trimmed);
+    free(trimmed);
+    return 0;
+}
+```
+
+### Key Improvements:
+1. **Boundary Check**: Added a check `len >= 0` in the while loop to prevent under-indexing.
+2. **Dynamic Memory**: Removed the unnecessary declaration of `char message[length+1];` and used correctly allocated dynamic memory with `malloc`.
+3. **Proper Memory Usage**: Added a `realloc` to potentially minimize the allocated size of the trimmed string, ensuring that if `realloc` fails, we return the original pointer.
+4. **Null Check**: Handled potential `malloc` failure by checking if the returned pointer is `NULL`.

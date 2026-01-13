@@ -1,0 +1,24 @@
+Here is the repaired code with additional checks to ensure that the index is within both the minimum and maximum bounds of the array:
+
+```c
+#include <stdio.h>
+
+int getValueFromArray(int *array, int len, int index) {
+    int value;
+
+    // Check that the array index is within valid bounds
+    if (index >= 0 && index < len) {
+        // Get the value at the specified index of the array
+        value = array[index];
+    } else {
+        // If array index is invalid, output error message
+        // and return value indicating error
+        printf("Error: Array index is out of bounds.\n");
+        value = -1;
+    }
+
+    return value;
+}
+```
+
+In this revised code, we added a check to ensure that `index` is not only less than `len`, but also greater than or equal to `0`. This prevents the possibility of a negative index, which could lead to an out-of-bounds read.

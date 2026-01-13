@@ -1,0 +1,65 @@
+To address the vulnerability, you need to perform additional checks to ensure that the Common Name (or Subject Alternative Name) in the certificate matches the expected hostname. Here is the corrected code:
+
+```c
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <string.h>
+
+int verify_certificate_host(X509 *cert, const char *expected_host) {
+    X509_NAME *subj;
+    char data[256];
+
+    // Get subject name
+    subj = X509_get_subject_name(cert);
+    if (subj == NULL) {
+        return 0; // Could not get subject name
+    }
+
+    // Try to extract the CN (Common Name)
+    if (X509_NAME_get_text_by_NID(subj, NID_commonName, data, sizeof(data)) > 0) {
+        // Compare the CN against the expected hostname
+        if (strcasecmp(data, expected_host) == 0) {
+            return 1; // CN matches
+        }
+    }
+
+    // If CN does not match, you may want to check Subject Alternative Names
+    STACK_OF(GENERAL_NAME) *san_names = NULL;
+    san_names = X509_get_ext_d2i((X509 *)cert, NID_subject_alt_name, NULL, NULL);
+    if (san_names != NULL) {
+        int san_names_count = sk_GENERAL_NAME_num(san_names);
+        for (int i = 0; i < san_names_count; i++) {
+            const GENERAL_NAME *current_name = sk_GENERAL_NAME_value(san_names, i);
+            if (current_name->type == GEN_DNS) {
+                // Extract the DNS name and compare it to the expected host
+                if (strcasecmp((char *)ASN1_STRING_get0_data(current_name->d.dNSName), expected_host) == 0) {
+                    // Found a match
+                    sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
+                    return 1;
+                }
+            }
+        }
+        sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
+    }
+
+    return 0; // No match found
+}
+
+void secure_connection(SSL *ssl, const char *expected_host) {
+    X509 *cert = SSL_get_peer_certificate(ssl);
+    int verify_result = SSL_get_verify_result(ssl);
+    
+    if (cert && verify_result == X509_V_OK && verify_certificate_host(cert, expected_host)) {
+        // do secret things
+    } else {
+        // handle verification failure
+    }
+    
+    if (cert) {
+        X509_free(cert);
+    }
+}
+
+```
+
+In this updated code, the `verify_certificate_host` function checks if the Common Name on the certificate matches the expected hostname, and also checks for matches among the Subject Alternative Names. The `secure_connection` function uses this additional check to verify the certificate properly before proceeding. This ensures that the SSL connection is verified not only for validity but also against the specific host you intend to connect to.

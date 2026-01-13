@@ -1,0 +1,28 @@
+Here's the repaired code with the necessary checks to ensure the array index is within the valid range:
+
+```c
+#include <stdio.h>
+
+int getValueFromArray(int *array, int len, int index) {
+    int value;
+
+    // Check that the array index is within the correct range of values for the array
+    if (index >= 0 && index < len) {
+        // Get the value at the specified index of the array
+        value = array[index];
+    }
+    // If array index is invalid then output error message
+    // and return value indicating error
+    else {
+        printf("Error: Index %d is out of bounds\n", index);
+        value = -1;
+    }
+
+    return value;
+}
+```
+
+Changes made:
+1. Added a check to ensure `index >= 0` to prevent negative indexing, which could lead to accessing out-of-bounds memory.
+2. Printed an error message when the index is out of bounds, providing better diagnostics.
+3. The message now indicates that the index is out of bounds if the condition fails.

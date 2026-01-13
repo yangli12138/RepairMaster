@@ -1,0 +1,107 @@
+To address the vulnerability in the provided code, we need to incorporate a mechanism to limit the number of concurrent connections to prevent resource exhaustion. One way to achieve this is by using a connection pool or limit the number of child processes being forked simultaneously. Additionally, handling potential errors in system calls is vital to ensure robustness. Here's a repaired version of the code implementing these measures:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <sys/wait.h>
+
+#define MAX_CONNECTIONS 100  // Define a maximum number of concurrent connections
+
+int current_connections = 0;
+
+// Signal handler for cleaning up child processes to prevent zombie processes
+void handle_sigchld(int sig) {
+    while (waitpid(-1, NULL, WNOHANG) > 0) {
+        current_connections--;  // Decrement the number of current connections
+    }
+}
+
+int main() {
+    int sock, newsock;
+    struct sockaddr_in server_addr;
+
+    // Create the socket
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Unable to create socket");
+        exit(EXIT_FAILURE);
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(8080);
+
+    // Bind the socket
+    if (bind(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Unable to bind socket");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    // Listen for incoming connections
+    if (listen(sock, MAX_CONNECTIONS) < 0) {
+        perror("Listen failed");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    // Handle SIGCHLD to clean up terminated child processes
+    struct sigaction sa;
+    sa.sa_handler = &handle_sigchld;
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIGCHLD, &sa, 0) == -1) {
+        perror("Failed to setup signal handler");
+        exit(EXIT_FAILURE);
+    }
+
+    while (1) {
+        if (current_connections < MAX_CONNECTIONS) {
+            newsock = accept(sock, NULL, NULL);
+            if (newsock < 0) {
+                perror("Accept failed");
+                close(sock);
+                exit(EXIT_FAILURE);
+            }
+
+            printf("A connection has been accepted\n");
+
+            current_connections++;  // Increment the active connection count
+
+            pid_t pid = fork();
+            if (pid < 0) {
+                perror("Fork failed");
+                close(newsock);
+                close(sock);
+                exit(EXIT_FAILURE);
+            }
+
+            if (pid == 0) {  // Child process
+                close(sock);
+                // Handle client communication here
+                // For example: read(newsock, buffer, sizeof(buffer));
+                close(newsock);
+                exit(EXIT_SUCCESS);
+            } else {  // Parent process
+                close(newsock);
+            }
+        } else {
+            // Can optionally reject the connection by not accepting new connections
+            printf("Max connections reached. New incoming connection will not be accepted.\n");
+            sleep(1);  // Avoid busy-waiting
+        }
+    }
+    close(sock);
+    return 0;
+}
+```
+
+### Key Fixes and Concepts:
+1. **Connection Limitation**: The `MAX_CONNECTIONS` constant limits the number of concurrent connections.
+2. **Signal Handling**: A SIGCHLD handler (`handle_sigchld`) is used to track when child processes terminate, and `current_connections` is decremented.
+3. **Error Handling**: Added error handling for system calls to handle unexpected situations gracefully.
+4. **Resource Cleanup**: Ensures that any open socket resources are safely closed after use.

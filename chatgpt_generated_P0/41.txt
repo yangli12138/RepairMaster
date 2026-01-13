@@ -1,0 +1,40 @@
+To address the vulnerability of not closing the file handle in case of an error during the file reading process, you need to ensure that the file handle is closed no matter how the function exits. Here's the repaired code:
+
+```c
+#include <stdio.h>
+
+#define BUF_SZ 1024
+#define DECODE_FAIL -1
+#define DECODE_SUCCESS 0
+
+int checkChecksum(char *buf);
+void decodeBlock(char *buf);
+
+int decodeFile(char* fName) {
+    char buf[BUF_SZ];
+    FILE* f = fopen(fName, "r");
+    if (!f) {
+        printf("cannot open %s\n", fName);
+        return DECODE_FAIL;
+    }
+    
+    while (fgets(buf, BUF_SZ, f)) {
+        if (!checkChecksum(buf)) {
+            fclose(f);  // Ensure the file is closed on error
+            return DECODE_FAIL;
+        } else {
+            decodeBlock(buf);
+        }
+    }
+    
+    fclose(f);  // Ensure the file is closed after processing
+    return DECODE_SUCCESS;
+}
+```
+
+### Key Fixes:
+
+1. **File Close on Error**: Added `fclose(f);` inside the `if (!checkChecksum(buf))` clause to ensure that the file is closed if an error occurs.
+2. **Proper Resource Release**: Ensured `fclose(f);` is called after the reading loop completes, which properly closes the file once all operations are finished.
+
+By making these modifications, we prevent resource leakage by making sure the file handle is closed in all execution paths.

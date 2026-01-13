@@ -1,0 +1,45 @@
+Here's the improved version of the code with the vulnerability addressed:
+
+```c
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_LENGTH 1024  // An example maximum length for the message body
+
+bool validateMessageLength(unsigned int length) {
+    return (length > 0 && length < MAX_LENGTH);
+}
+
+unsigned int getMessageLength(const char *lengthArray) {
+    // Assuming getMessageLength is implemented correctly
+    // and returns the appropriate length as an unsigned int
+    // Here is a placeholder for demonstration purposes.
+    return (unsigned int) atoi(lengthArray);  // Convert the length from string to unsigned int
+}
+
+int processMessage(char **message) {
+    char *body;
+    unsigned int length = getMessageLength(message[0]);
+
+    if (validateMessageLength(length)) {
+        body = message[1];  // Points to the beginning of the message body
+        processMessageBody(body);  // Assuming processMessageBody is implemented elsewhere
+        return SUCCESS;
+    } else {
+        printf("Unable to process message; invalid message length\n");
+        return FAIL;
+    }
+}
+```
+
+### Key changes made:
+
+1. **Unsigned Int for Length**: The code now uses `unsigned int` for the message length to avoid negative values.
+
+2. **Maximum Length Check**: Added `validateMessageLength` function to ensure the message length is within a defined maximum. This prevents uncontrolled resource consumption.
+
+3. **Safe Array Access**: Directly used `message[1]` for accessing the body to avoid pointer arithmetic errors.
+
+4. **Error Notification**: Improved error message for clarity.
+
+This approach ensures that only valid message lengths are processed, thus avoiding excessive memory allocation that might exhaust system resources.

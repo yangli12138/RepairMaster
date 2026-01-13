@@ -1,0 +1,117 @@
+To address the vulnerability of uncontrolled resource consumption in the code, we need to implement a mechanism to limit the number of active connections. This can be achieved by maintaining a counter to track the active connections and setting a maximum limit. Once the limit is reached, the server should not accept new connections until some of the existing ones are closed.
+
+Here's the repaired code with connection limiting:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+
+#define MAX_CONNECTIONS 100
+
+int active_connections = 0;
+
+void handle_connection(int newsock) {
+    // Handle the connection (this could involve reading/writing to the socket)
+    // For this example, we'll just close the socket after a short interaction.
+    printf("Handling connection in process %d\n", getpid());
+    // Simulate some activity
+    sleep(1);
+    close(newsock);
+    printf("Connection handled and closed in process %d\n", getpid());
+    exit(0);  // Exit the child process after handling the connection
+}
+
+void sigchld_handler(int signo) {
+    // Use waitpid to clean up zombie processes and update active connection count
+    while (waitpid(-1, NULL, WNOHANG) > 0) {
+        active_connections--;
+    }
+}
+
+int main() {
+    int sock, newsock; 
+    struct sockaddr_in server_addr;
+    pid_t pid;
+
+    // Set up signal handler for SIGCHLD to clean up child processes
+    struct sigaction sa;
+    sa.sa_handler = sigchld_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &sa, NULL);
+
+    // Create socket
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(8080);
+
+    // Bind the socket
+    if (bind(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("bind failed");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    // Start listening
+    if (listen(sock, MAX_CONNECTIONS) < 0) {
+        perror("listen failed");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    while (1) {
+        if (active_connections < MAX_CONNECTIONS) {
+            newsock = accept(sock, NULL, NULL);
+            if (newsock < 0) {
+                perror("accept failed");
+                continue;
+            }
+            printf("A connection has been accepted\n");
+
+            pid = fork();
+            if (pid < 0) {
+                perror("fork failed");
+                close(newsock);
+                continue;
+            }
+            else if (pid == 0) {
+                // In child process
+                close(sock);  // Child doesn't need the listener socket
+                handle_connection(newsock);
+            }
+            else {
+                // In parent process
+                active_connections++;
+                close(newsock);  // Parent doesn't need the connected socket
+            }
+        }
+        else {
+            printf("Max connections reached. New connections will be refused until existing connections are terminated.\n");
+            sleep(1);  // Simple backoff before checking again
+        }
+    }
+
+    // Close the listening socket (this won't be reached in this example)
+    close(sock);
+    return 0;
+}
+```
+
+### Key Changes:
+1. **Connection Limit**: Introduced `MAX_CONNECTIONS` to set a limit on active connections.
+2. **Active Connections Counter**: Maintains `active_connections` to track and manage current connections.
+3. **SIGCHLD Handler**: Uses `sigaction` to handle `SIGCHLD` and decrements the connection count when a child process (connection handler) exits.
+4. **Resource Management**: Socket descriptors are properly closed in child and parent processes to prevent resource leaks.
+
+This implementation ensures that the server does not overwhelm the system by limiting the number of simultaneous connections and properly cleaning up resources.

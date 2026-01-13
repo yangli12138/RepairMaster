@@ -1,0 +1,28 @@
+To address the vulnerability related to CWE-426: Untrusted Search Path, we need to ensure that the `system` call uses the absolute path for the `ls` command instead of relying on the environment's `PATH` variable. This can be done by providing the full path to the `ls` command, which is usually `/bin/ls` on Unix-like systems. This approach prevents the execution of any malicious `ls` programs that might be present in directories specified in the `PATH` environment variable.
+
+Below is the repaired code:
+
+```c
+#include <stdio.h>
+
+#define DIR "/restricted/directory"
+
+int main() {
+    char cmd[512];  // Increased buffer size slightly for safety with fixed path
+    // Use the absolute path to the 'ls' command
+    snprintf(cmd, sizeof(cmd), "/bin/ls -l %s", DIR);
+    
+    // Raise privileges to those needed for accessing DIR.
+    RaisePrivileges(...);
+    system(cmd);
+    DropPrivileges(...);
+
+    return 0;
+}
+```
+
+### Key Changes:
+1. **Use of `snprintf`**: This avoids potential buffer overflow issues, even though it's not the main focus in this example.
+2. **Absolute Path to 'ls'**: By specifying `/bin/ls`, we ensure that the system call always uses the intended system utility, ignoring any rogue executables found in the `PATH`. 
+
+This modification effectively mitigates the untrusted search path vulnerability present in the original code.

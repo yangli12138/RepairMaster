@@ -1,0 +1,49 @@
+To address the CWE-295: Improper Certificate Validation vulnerability in your code, it's important to ensure that your application performs strict certificate checking and does not accept self-signed certificates unless explicitly allowed for a justified reason. Here’s the corrected version of the code:
+
+```c
+#include <openssl/ssl.h>
+#include <openssl/x509_vfy.h>
+
+SSL *ssl; // Assuming ssl is already initialized and connected
+X509 *cert = SSL_get_peer_certificate(ssl);
+if (cert) {
+    long verify_result = SSL_get_verify_result(ssl);
+    
+    if (verify_result == X509_V_OK) {
+        // Certificate verification passed
+        // Additional hostname verification should be done here
+        X509_VERIFY_PARAM *vpm = SSL_get0_param(ssl);
+        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_TRUSTED_FIRST);
+
+        char servername[] = "expected.hostname.com"; // Replace with expected hostname
+        if (X509_check_host(cert, servername, strlen(servername), 0, NULL) == 1) {
+            // Hostname matches, certificate is valid
+            // Proceed with the connection
+        } else {
+            // Hostname does not match
+            fprintf(stderr, "Hostname verification failed.\n");
+            // Handle error - possibly terminate connection
+        }
+    } else {
+        // Certificate verification failed
+        fprintf(stderr, "Certificate verification failed: %ld\n", verify_result);
+        // Handle error - possibly terminate connection
+    }
+
+    X509_free(cert);
+} else {
+    fprintf(stderr, "No certificate was presented by the peer.\n");
+    // Handle error - possibly terminate connection
+}
+```
+
+### Key Points:
+1. **Certificate Verification**: Check if `SSL_get_verify_result` returns `X509_V_OK`, indicating that the certificate is verified successfully by the trust store.
+   
+2. **Hostname Verification**: Validate the hostname manually using `X509_check_host` to prevent Man-in-the-Middle (MitM) attacks.
+
+3. **Error Handling**: If any checks fail, handle errors appropriately, such as terminating the connection.
+
+4. **Secure Defaults**: Avoid accepting self-signed certificates unless combined with additional context/appropriate security measures like pinning the certificate or using a securely managed trust store.
+
+By following these steps, you ensure that the communication channel is correctly authenticated and protected against unauthorized interceptions or impersonations.

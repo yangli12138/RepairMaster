@@ -1,0 +1,16 @@
+To address the buffer overflow vulnerability in the given C code, we need to restrict the number of characters that `scanf` reads to fit within the bounds of the `last_name` array. Here is the revised code:
+
+```c
+#include <stdio.h>
+
+int main() {
+    char last_name[20];
+    printf("Enter your last name: ");
+    // %19s ensures that we read at most 19 characters, leaving space for the null terminator
+    scanf("%19s", last_name);
+    printf("Your last name is: %s\n", last_name);
+    return 0;
+}
+```
+
+In this code, `%19s` is used in the `scanf` format string, which limits the input to 19 characters, ensuring that there is room for the null terminator `\0` to safely fit within the `last_name` array, thus preventing a buffer overflow. Always remember that arrays in C are zero-indexed, and the last position needs to be reserved for the null terminator in a string.

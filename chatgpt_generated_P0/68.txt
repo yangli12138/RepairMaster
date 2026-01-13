@@ -1,0 +1,55 @@
+Certainly! Below is the repaired code to address the vulnerability by ensuring the message number `num` is validated to be within the allowable range of the indices for the `sizes` array.
+
+```c
+#include <stdio.h>
+
+/* Function to report warnings */
+void report(FILE *stream, const char *message) {
+    fprintf(stream, "%s", message);
+}
+
+/* Function to check for the termination line */
+int DOTLINE(char *buf) {
+    // Placeholder implementation, assumes buf contains a single '.' character if it's the termination line.
+    return buf[0] == '.' && buf[1] == '\0';
+}
+
+/* Simulated function to receive data from socket */
+int gen_recv(int sock, char *buf, size_t buf_size) {
+    // Placeholder implementation, should return valid data from the socket
+    return -1; // Return -1 to simulate end of data
+}
+
+/* capture the sizes of all messages */
+int getsizes(int sock, int count, int *sizes) {
+    char buf[BUFFER_SIZE];
+    int ok;
+    int num, size;
+
+    // Initialize sizes array to 0
+    for (int i = 0; i < count; i++) {
+        sizes[i] = 0;
+    }
+
+    // Read values from socket and added to sizes array
+    while ((ok = gen_recv(sock, buf, sizeof(buf))) == 0) {
+        // Continue read from socket until buf only contains '.'
+        if (DOTLINE(buf)) {
+            break;
+        } else if (sscanf(buf, "%d %d", &num, &size) == 2) {
+            if (num > 0 && num <= count) {
+                sizes[num - 1] = size;
+            } else {
+                /* warn about possible attempt to induce buffer overflow */
+                report(stderr, "Warning: ignoring bogus data for message sizes returned by server.\n");
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### Explanation:
+- **Validation of Array Index**: The message number `num` is checked to ensure it is greater than 0 and less than or equal to `count`. This ensures that `num - 1` is a valid index for the `sizes` array.
+- **Warning Message**: If `num` is not within the valid range, a warning message is logged to notify about the invalid data received.
+- **Initialization**: The `sizes` array is initialized to zero to ensure no garbage values are left uninitialized in the array, preventing potential misuse of uninitialized data.

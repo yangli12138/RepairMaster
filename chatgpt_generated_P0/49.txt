@@ -1,0 +1,38 @@
+To address the vulnerability CWE-134: Use of Externally-Controlled Format String in the provided C code, you should modify the `printf` function call to use a fixed format specifier. This ensures that no unexpected format specifiers can be exploited by an attacker. 
+
+Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+void printWrapper(char *string) {
+    // Use a format specifier to prevent uncontrolled format strings
+    printf("%s", string);
+}
+
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <string>\n", argv[0]);
+        return 1;
+    }
+    
+    char buf[5012];
+    
+    // Ensure there's no buffer overflow when copying the string
+    strncpy(buf, argv[1], sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';  // Null-terminate the buffer
+    
+    printWrapper(buf);
+    
+    return 0;
+}
+```
+
+### Key Changes to Address the Vulnerability:
+
+1. **Format Specifier in `printf`:** The `printf("%s", string);` ensures that the format string vulnerability is mitigated. This prevents the input string from being interpreted as a format string.
+
+2. **Safe Copy with `strncpy`:** Use `strncpy` to safely copy the input string into the buffer without exceeding its size. This helps prevent buffer overflow. Also, ensure that the buffer is null-terminated.
+
+3. **Input Check:** Added a condition to check if an argument is provided, ensuring the program has the necessary data to operate.

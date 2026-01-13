@@ -1,0 +1,39 @@
+To address the vulnerability, you should change the function to return a signed integer type, such as `int`, so negative error codes can be properly represented. Additionally, you should define a specific negative error code to indicate failure instead of relying on an implicit conversion. Here's the repaired code:
+
+```c
+#include <stdio.h>
+
+#define ERROR -1
+
+int readdata () {
+    int amount = 0;
+    int result = 0; // Assume this variable is being used to check some condition
+
+    // Perform operations and set 'result' accordingly
+    // Example:
+    // result = some_operation();
+
+    if (result == ERROR) {
+        return ERROR;
+    }
+
+    // Other logic to set 'amount' accordingly
+    // ...
+
+    return amount;
+}
+
+int main() {
+    int data = readdata();
+
+    if (data == ERROR) {
+        printf("Error reading data.\n");
+    } else {
+        printf("Data read successfully: %d\n", data);
+    }
+
+    return 0;
+}
+```
+
+This version properly handles the error case by returning a negative error code and allows for more accurate checking of the function's return value in the calling code.

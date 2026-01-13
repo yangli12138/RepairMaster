@@ -1,0 +1,49 @@
+To address the vulnerability in the provided code, we need to ensure that the return value of `returnChunkSize()` is properly checked before using it in the `memcpy` operation. This involves validating that the size is a valid positive integer before proceeding. Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int returnChunkSize(void *buf) {
+    // Example implementation: this function should return the size of usable memory
+    // assuming valid chunk info, otherwise return -1 for an error.
+    if (buf != NULL) {
+        // Suppose we have a way to determine valid chunk size
+        return 1024; // Example valid size for demonstration
+    }
+    return -1; // Indicate an error
+}
+
+int main() {
+    void *destBuf = malloc(1024); // Allocate memory for demonstration
+    void *srcBuf = malloc(1024);  // Allocate memory for demonstration
+
+    if (destBuf == NULL || srcBuf == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return 1;
+    }
+
+    int chunkSize = returnChunkSize(destBuf);
+    if (chunkSize <= 0) {
+        fprintf(stderr, "Invalid memory chunk size\n");
+        // Handle the error, for example, by releasing resources and exiting
+        free(destBuf);
+        free(srcBuf);
+        return 1;
+    }
+
+    // Perform the memcpy only if we have a valid chunk size
+    memcpy(destBuf, srcBuf, chunkSize);
+
+    // Free the allocated buffers
+    free(destBuf);
+    free(srcBuf);
+
+    return 0;
+}
+```
+
+Key fixes:
+- Added a check to ensure that `returnChunkSize()` returns a positive value before proceeding with `memcpy`.
+- Included error handling to manage the scenario where the size is invalid.
+- Modified the example to illustrate memory allocation and management, necessary for `memcpy` to function correctly.

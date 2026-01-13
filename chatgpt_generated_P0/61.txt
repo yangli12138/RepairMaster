@@ -1,0 +1,53 @@
+Certainly! Below is the repaired code for the given problem, ensuring that the correct pointer is freed by using array indexing.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define SUCCESS (1)
+#define FAILURE (0)
+
+int contains_char(char c) {
+    char *str;
+    int i = 0;
+    str = (char *)malloc(20 * sizeof(char));
+
+    if (str == NULL) {
+        /* Handle memory allocation failure */
+        return FAILURE;
+    }
+
+    strcpy(str, "Search Me!");
+
+    while (i < strlen(str)) {
+        if (str[i] == c) {
+            /* Matched char, free string and return success */
+            free(str);
+            return SUCCESS;
+        }
+        /* Didn't match yet, increment index and try next char */
+        i = i + 1;
+    }
+
+    /* We did not match the char in the string, free memory and return failure */
+    free(str);
+    return FAILURE;
+}
+
+int main() {
+    char searchChar = 'A'; // Example character to search
+    int result = contains_char(searchChar);
+    if (result == SUCCESS) {
+        printf("Character found!\n");
+    } else {
+        printf("Character not found.\n");
+    }
+    return 0;
+}
+```
+
+In the repaired code:
+- We use an array index (`i`) to traverse the string `str` safely.
+- After checking each character, we ensure the entire allocated memory block starting at `str` is correctly freed.
+- We also include a check for the result of the `malloc` function to handle potential memory allocation failures.

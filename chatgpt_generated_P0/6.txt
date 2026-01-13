@@ -1,0 +1,40 @@
+To address the vulnerability, the code must check the return value of `gethostbyaddr()` to ensure it's not NULL before attempting to use it. Here's the repaired code:
+
+```c
+void host_lookup(char *user_supplied_addr){
+    struct hostent *hp;
+    in_addr_t addr;
+    char hostname[64];
+    in_addr_t inet_addr(const char *cp);
+
+    /* routine that ensures user_supplied_addr is in the right format for conversion */
+    if (!validate_addr_form(user_supplied_addr)) {
+        fprintf(stderr, "Invalid IP address format.\n");
+        return;
+    }
+
+    addr = inet_addr(user_supplied_addr);
+
+    if (addr == INADDR_NONE) {
+        fprintf(stderr, "Invalid IP address conversion.\n");
+        return;
+    }
+
+    hp = gethostbyaddr(&addr, sizeof(struct in_addr), AF_INET);
+
+    if (hp == NULL) {
+        fprintf(stderr, "Hostname lookup failed.\n");
+        return;
+    }
+
+    /* Ensure the hostname fits into the buffer */
+    strncpy(hostname, hp->h_name, sizeof(hostname) - 1);
+    hostname[sizeof(hostname) - 1] = '\0'; // Null-terminate the string
+
+    printf("Hostname: %s\n", hostname);
+}
+```
+
+### Key Fixes:
+- **Return Value Check:** Added a check for the result of `gethostbyaddr()`. If it returns `NULL`, an error message is printed and the function returns early to avoid dereferencing the NULL pointer.
+- **Buffer Handling:** Changed `strcpy` to `strncpy` to prevent potential buffer overflows. The result is explicitly null-terminated to ensure a valid C string.

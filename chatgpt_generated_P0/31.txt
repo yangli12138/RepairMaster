@@ -1,0 +1,50 @@
+To address the buffer overflow vulnerability, we will replace `strcpy` with `strncpy`, ensuring that we respect the maximum size of the `hostname` buffer. Additionally, we will add a check to make sure that the `clienthp` is not a `NULL` pointer before accessing its `h_name`. Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define MAX_LEN 256
+#define MAX_CONNECTIONS 10
+
+void logOutput(const char *message, const char *hostname) {
+    printf("%s%s\n", message, hostname); // Example logging function
+}
+
+// create server socket, bind to server address and listen on socket
+// ...
+
+// accept client connections and process requests
+int count = 0;
+for (count = 0; count < MAX_CONNECTIONS; count++) {
+
+    struct sockaddr_in clientaddr;
+    int clientlen = sizeof(struct sockaddr_in);
+    int clientsocket = accept(serversocket, (struct sockaddr *)&clientaddr, &clientlen);
+
+    if (clientsocket >= 0) {
+        struct hostent *clienthp = gethostbyaddr((char*)&clientaddr.sin_addr, sizeof(clientaddr.sin_addr), AF_INET);
+        if (clienthp != NULL) {
+            // Use strncpy to safely copy the hostname, ensuring we do not overflow the buffer
+            memset(hostname, 0, MAX_LEN); // Zero out the hostname buffer
+            strncpy(hostname, clienthp->h_name, MAX_LEN - 1); // Leave space for null terminator
+            logOutput("Accepted client connection from host ", hostname);
+            
+            // process client request
+            // ...
+        } else {
+            logOutput("Could not resolve client hostname for IP ", inet_ntoa(clientaddr.sin_addr));
+        }
+        close(clientsocket);
+    }
+}
+close(serversocket);
+```
+
+### Key Points:
+- **strncpy:** This function copies up to `MAX_LEN - 1` characters from the source string to ensure that the destination buffer is terminated with a null character, avoiding a buffer overflow.
+- **Null Check:** Before accessing `clienthp->h_name`, there is a check to ensure `clienthp` is not `NULL`, which prevents dereferencing a null pointer if `gethostbyaddr` fails.
+- **Zero-out Buffer:** The call to `memset` is not strictly necessary, but it ensures that the `hostname` buffer is zeroed out beforehand. This may be useful for security purposes by ensuring that the entire buffer does not retain old or uninitialized data.

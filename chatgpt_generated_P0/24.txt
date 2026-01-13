@@ -1,0 +1,32 @@
+To address the memory leak in the provided code, it's essential to ensure that the allocated memory is properly freed if the `read()` call fails to return the expected number of bytes. Here's the corrected code:
+
+```c
+#include <stdlib.h>
+#include <unistd.h>
+
+#define BLOCK_SIZE 1024
+
+char* getBlock(int fd) {
+    char* buf = (char*) malloc(BLOCK_SIZE);
+    if (!buf) {
+        return NULL;
+    }
+
+    ssize_t bytesRead = read(fd, buf, BLOCK_SIZE);
+    if (bytesRead != BLOCK_SIZE) {
+        free(buf);  // Free the allocated memory before returning NULL
+        return NULL;
+    }
+
+    return buf;
+}
+```
+
+### Explanation of the Changes:
+1. **Check `read()` Return Value:**
+   - Store the return value of the `read()` function in a variable named `bytesRead` to evaluate whether it matches `BLOCK_SIZE`.
+
+2. **Free Memory on Failure:**
+   - If `read()` returns a value different from `BLOCK_SIZE`, free the allocated memory using `free(buf)` before returning `NULL`.
+
+This modification ensures that there is no memory leak when `read()` fails to read the expected number of bytes, thus addressing the issue of uncontrolled resource consumption.

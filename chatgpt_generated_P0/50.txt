@@ -1,0 +1,30 @@
+To resolve the vulnerability of CWE-134: Use of Externally-Controlled Format String, the code should be updated such that it does not directly use the input as a format string. Instead, a fixed format string should be applied. Here's the revised code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char **argv) {
+    char buf[128];
+
+    if (argc > 1) {
+        // Use a fixed format string to safely copy the input to the buffer
+        snprintf(buf, sizeof(buf), "%s", argv[1]);
+    } else {
+        fprintf(stderr, "Usage: %s <input string>\n", argv[0]);
+        return 1;
+    }
+
+    // For demonstration purposes, printing the buffer
+    printf("Buffer content: %s\n", buf);
+
+    return 0;
+}
+```
+
+### Key Changes Made:
+- Added a check to ensure that the program has at least one command line argument before proceeding.
+- Used a static format string `"%s"` with `snprintf()` to safely copy the input to the buffer, preventing malicious format string injection.
+- Provided a user-friendly error message if the command line argument is missing.
+
+These changes address the vulnerability by ensuring that external input is not interpreted as a format string.

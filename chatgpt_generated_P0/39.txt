@@ -1,0 +1,33 @@
+To address the vulnerability in the OpenSSL code, we need to ensure that the certificate's validity is properly checked using the `SSL_get_verify_result()` function. This step is essential to verify the certificate and ensure that the host can indeed be trusted. Here is the repaired code:
+
+```c
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
+if (cert = SSL_get_peer_certificate(ssl)) {
+    // got certificate, proceed to verify it
+    long verify_result = SSL_get_verify_result(ssl);
+
+    // Check if the certificate verification was successful
+    if (verify_result == X509_V_OK) {
+        // Certificate is valid, host can be trusted
+    } else {
+        // Certificate verification failed, handle the error accordingly
+        fprintf(stderr, "Certificate verification failed: %ld\n", verify_result);
+        // Take proper actions, e.g., do not proceed with the connection
+    }
+    X509_free(cert); // Free the X509 structure explicitly after use
+} else {
+    // No certificate provided by the peer, handle the error
+    fprintf(stderr, "No certificate provided by the peer.\n");
+    // Take proper actions, e.g., do not proceed with the connection
+}
+```
+
+### Key Fixes Made:
+1. **Certificate Retrieval**: The code retrieves the peer's certificate using `SSL_get_peer_certificate()`.
+2. **Verification Step**: After getting the certificate, the code now properly calls `SSL_get_verify_result(ssl)` to check whether the validation of the certificate returned `X509_V_OK`, indicating a successful verification.
+3. **Error Handling**: The code handles cases where the certificate verification fails or where no certificate is provided, allowing the program to respond to these errors as appropriate.
+4. **Resource Management**: It frees the certificate with `X509_free(cert)` after use, preventing memory leaks (though not primarily related to the immediate vulnerability).
+
+This revised version correctly ensures the validity of the SSL certificate and improves the robustness of handling SSL/TLS connections.

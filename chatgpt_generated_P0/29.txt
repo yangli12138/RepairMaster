@@ -1,0 +1,20 @@
+To address the buffer overflow vulnerability in the provided code, you should use a safer alternative to `strcpy()` that limits the number of characters copied to avoid exceeding the buffer size. In C, you can use `strncpy()` to achieve this. Here is the corrected code:
+
+```c
+#include <string.h>
+
+void manipulate_string(char * string){
+    char buf[24];
+    // Ensure that you copy only 23 characters and leave space for the null terminator.
+    strncpy(buf, string, sizeof(buf) - 1);
+    // Manually null-terminate the string to prevent any potential overflow issue
+    buf[sizeof(buf) - 1] = '\0';
+    ...
+}
+```
+
+In this fixed version:
+- `strncpy()` is used to copy only up to `sizeof(buf) - 1` characters, ensuring that there is always room for a null terminator.
+- The line `buf[sizeof(buf) - 1] = '\0';` explicitly adds a null terminator to the end of the buffer. This is necessary because `strncpy()` does not automatically null-terminate the string if the number of characters copied is equal to the specified limit. 
+
+By following this approach, we reduce the risk of a buffer overflow vulnerability.

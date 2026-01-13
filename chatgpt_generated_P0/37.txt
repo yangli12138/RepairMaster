@@ -1,0 +1,26 @@
+To address the vulnerability of accepting expired certificates, which is categorized as CWE-295: Improper Certificate Validation, you need to modify the code to ensure that an expired certificate is not accepted. Here is the repaired code:
+
+```c
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
+if (cert = SSL_get_peer_certificate(ssl)) {
+    foo = SSL_get_verify_result(ssl);
+    // Do not allow expired certificates
+    if (X509_V_OK == foo) {
+        // Certificate is valid, proceed with further processing
+        // do stuff
+    } else {
+        // Certificate is not valid, handle error
+        fprintf(stderr, "Certificate validation failed: %ld\n", foo);
+        // Possible actions: close connection, log error, alert user, etc.
+    }
+    X509_free(cert); // Clean up the certificate to avoid memory leaks
+} else {
+    // No certificate provided, handle error
+    fprintf(stderr, "No certificate provided by peer\n");
+    // Possible actions: close connection, log error, alert user, etc.
+}
+```
+
+In this repaired code, the condition `(X509_V_ERR_CERT_HAS_EXPIRED == foo)` has been removed to ensure expired certificates are not accepted. Additionally, the `X509_free(cert);` function is called to free the memory allocated for the certificate to prevent memory leaks. Proper error handling is added to manage cases where certificate validation fails.

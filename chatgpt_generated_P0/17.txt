@@ -1,0 +1,58 @@
+To address the integer overflow vulnerability, we should change the data type from `short` to a larger data type that can handle larger sums, such as `int`. Additionally, we can add validation to ensure that the values do not exceed the expected range.
+
+Here is the repaired code:
+
+```c
+#include <limits.h> // For defining INT_MAX
+
+#define JAN 1
+#define FEB 2
+#define MAR 3
+
+int getMonthlySales(int month) {
+    // This function should retrieve monthly sales. This is a placeholder and should be implemented.
+    return 0; // Example placeholder value
+}
+
+float calculateRevenueForQuarter(int quarterSold) {
+    // Calculate and return the revenue based on sales.
+    return (float)quarterSold * 100.0f; // Example calculation
+}
+
+void saveFirstQuarterRevenue(float revenue) {
+    // Save the revenue to the database. This is a placeholder and should be implemented.
+}
+
+int determineFirstQuarterRevenue() {
+    // Variable for sales revenue for the quarter
+    float quarterRevenue = 0.0f;
+
+    int JanSold = getMonthlySales(JAN); /* Get sales in January */
+    int FebSold = getMonthlySales(FEB); /* Get sales in February */
+    int MarSold = getMonthlySales(MAR); /* Get sales in March */
+
+    // Check for potential integer overflow
+    if ((JanSold > INT_MAX - FebSold) || (JanSold + FebSold > INT_MAX - MarSold)) {
+        // Handle the potential overflow
+        fprintf(stderr, "Error: Potential integer overflow when calculating quarter sales.\n");
+        return -1;
+    }
+    
+    // Calculate quarterly total
+    int quarterSold = JanSold + FebSold + MarSold;
+
+    // Calculate the total revenue for the quarter
+    quarterRevenue = calculateRevenueForQuarter(quarterSold);
+
+    // Save the first quarter revenue results to the database
+    saveFirstQuarterRevenue(quarterRevenue);
+
+    return 0;
+}
+```
+
+**Key Changes:**
+
+1. Changed the data type of sales variables `JanSold`, `FebSold`, `MarSold`, and `quarterSold` from `short` to `int` to accommodate larger values.
+2. Introduced a check for potential overflow before calculating the total, using `INT_MAX` to ensure no overflow occurs.
+3. Added error handling logic to manage situations where an integer overflow could occur.

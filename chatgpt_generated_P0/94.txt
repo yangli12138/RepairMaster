@@ -1,0 +1,44 @@
+To address the use-after-free vulnerability, we need to ensure that the freed pointer is not used after being freed. We can accomplish this by setting the pointer to `NULL` after freeing it, and adjusting the code logic to avoid using the pointer in `logError`.
+
+Here is the repaired code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+#define SIZE 100
+
+void logError(const char* message, const char* resource) {
+    printf("%s\n", message);
+    if (resource != NULL) {
+        printf("Resource info: %s\n", resource);
+    }
+}
+
+int main() {
+    char* ptr = (char*)malloc(SIZE);
+    if (ptr == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return 1;
+    }
+    
+    int err = 1; // let's assume there's an error
+    int abrt = 0;
+    
+    if (err) {
+        abrt = 1;
+        free(ptr);
+        ptr = NULL; // Reset the pointer after freeing it
+    }
+    
+    if (abrt) {
+        logError("operation aborted before commit", NULL); // Pass NULL to avoid use after free
+    }
+
+    return 0;
+}
+```
+
+In the repaired code:
+- After freeing `ptr`, set it to `NULL` to prevent accidental usage.
+- Adjusted `logError` call to pass `NULL` instead of `ptr` because the resource is no longer valid.

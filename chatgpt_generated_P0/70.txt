@@ -1,0 +1,35 @@
+To address the SQL Injection vulnerability in the code, you should use parameterized queries instead of dynamically constructing a query string by concatenating user input. Here's the repaired code:
+
+```csharp
+using System.Data;
+using System.Data.SqlClient;
+
+// ...
+
+string userName = ctx.getAuthenticatedUserName();
+string itemName = ItemName.Text;
+
+string query = "SELECT * FROM items WHERE owner = @owner AND itemname = @itemname";
+
+using (SqlConnection conn = new SqlConnection(connectionString))
+{
+    using (SqlCommand cmd = new SqlCommand(query, conn))
+    {
+        // Use parameterized queries to prevent SQL Injection
+        cmd.Parameters.AddWithValue("@owner", userName);
+        cmd.Parameters.AddWithValue("@itemname", itemName);
+
+        SqlDataAdapter sda = new SqlDataAdapter(cmd);
+        DataTable dt = new DataTable();
+        sda.Fill(dt);
+    }
+}
+
+// ...
+```
+
+Key changes:
+1. Replaced string concatenation with parameterized queries by using `SqlCommand` and SQL parameters `@owner` and `@itemname`.
+2. Used `cmd.Parameters.AddWithValue` to safely add user input into the query.
+
+By following these changes, you ensure that user input is properly sanitized and prevent SQL Injection attacks.

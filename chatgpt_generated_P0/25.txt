@@ -1,0 +1,22 @@
+To address the vulnerability in the code, it is essential to ensure that the SqlConnection and SqlDataReader objects are properly closed and resources are released even if an exception occurs. This can be achieved by using `try-finally` blocks, or more elegantly, by using the `using` statement to automatically handle the resource cleanup. Here's the repaired code:
+
+```csharp
+using (SqlConnection conn = new SqlConnection(connString))
+{
+    SqlCommand cmd = new SqlCommand(queryString, conn);
+    conn.Open();
+    
+    using (SqlDataReader rdr = cmd.ExecuteReader())
+    {
+        HarvestResults(rdr);
+    } // rdr is automatically closed here
+} // conn is automatically closed here
+```
+
+### Explanation:
+
+1. **Using Statement:** The `using` statement is used for both `SqlConnection` and `SqlDataReader`. This ensures that these resources are disposed of correctly when they go out of scope, even if an exception is thrown.
+
+2. **Exception Safety:** The `using` statement automatically calls the `Dispose` method on the objects, which in turn ensures that `Close` is called. This handles resource cleanup in the presence of exceptions.
+
+By implementing these changes, you ensure that the database connection and reader resources are properly released, preventing resource leaks and potential database cursor exhaustion.

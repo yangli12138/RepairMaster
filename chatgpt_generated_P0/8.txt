@@ -1,0 +1,37 @@
+To address the vulnerability in this code, we need to ensure that the return value from `returnChunkSize()` is properly validated before it is used in the `memcpy()` function. Specifically, we must check for negative values to prevent incorrectly large size arguments due to unsigned integer wrapping. Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+// Dummy example function to simulate returnChunkSize
+int returnChunkSize(void * buffer) {
+    // Implement the logic to determine the chunk size
+    // For demonstration, we'll just return a realistic value.
+    if (buffer == NULL) {
+        return -1; // Indicate an error
+    }
+    return 256; // Example size
+}
+
+int main() {
+    char destBuf[256];
+    char srcBuf[256];
+    int chunkSize = returnChunkSize(destBuf);
+
+    if (chunkSize > 0 && chunkSize <= sizeof(destBuf)) {
+        // Ensure the memcpy operation is safe within bounds
+        memcpy(destBuf, srcBuf, chunkSize - 1);
+    } else {
+        fprintf(stderr, "Error: Invalid chunk size\n");
+        // Handle the error accordingly
+    }
+
+    return 0;
+}
+```
+
+### Explanation:
+1. **Check Return Value**: The return value of `returnChunkSize()` is checked to ensure it is positive. This prevents the -1 error return from causing incorrect behavior.
+2. **Bounds Check**: We add a bounds check that ensures `chunkSize` does not exceed the size of `destBuf`. This prevents any out-of-bounds memory write.
+3. **Error Handling**: If the size is incorrect (negative or too large), an error message is printed, and appropriate error handling can be enacted, preventing unsafe operations from proceeding.

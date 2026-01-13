@@ -1,0 +1,30 @@
+To address the vulnerability of incorrect permission assignment, you should ensure that the file is created with more restrictive permissions. Instead of setting the umask to 0, which allows the file to be created with world-writable permissions, set the umask to a value that restricts the permissions. Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#define OUTFILE "hello.out"
+
+int main() {
+    // Set the umask so files are created with 0644 permissions (rw-r--r--)
+    // 077 is subtracted from 0666 (default) to achieve this
+    umask(022);
+
+    FILE *out;
+
+    out = fopen(OUTFILE, "w");
+    if (out) {
+        fprintf(out, "hello world!\n");
+        fclose(out);
+    } else {
+        perror("Failed to open file");
+        return 1;
+    }
+
+    return 0;
+}
+```
+
+In this fixed version, `umask(022);` is used before creating the file. This sets file permissions to 0644 by default for new files (rw-r--r--), allowing only the owner to write to the file, while others can only read it. Proper error checking for `fopen` is also included to handle any opening failures gracefully.

@@ -1,0 +1,63 @@
+To address the vulnerability in the provided C code, we need to account for the increased buffer space required when encoding special characters. Specifically, the ampersand character, which expands from `&` to `&amp;`, does so by 5 characters. To ensure we do not have an out-of-bounds write, we must allocate enough memory in the destination buffer to accommodate potential expansion and thoroughly validate the length of the destination buffer during the encoding process.
+
+Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_SIZE 1000
+
+char* copy_input(const char* user_supplied_string) {
+    int i, dst_index;
+    // Assume the worst case: every character could be an '&' needing 5 characters for encoding
+    size_t max_dst_size = strlen(user_supplied_string) * 5 + 1;
+    char* dst_buf = (char*) malloc(sizeof(char) * max_dst_size);
+
+    if (MAX_SIZE <= strlen(user_supplied_string)) {
+        die("User string too long, die evil hacker!");
+    }
+
+    dst_index = 0;
+    for (i = 0; i < strlen(user_supplied_string); i++) {
+        if ('&' == user_supplied_string[i]) {
+            if (dst_index + 5 >= max_dst_size) {
+                die("Buffer overflow detected!");
+            }
+            dst_buf[dst_index++] = '&';
+            dst_buf[dst_index++] = 'a';
+            dst_buf[dst_index++] = 'm';
+            dst_buf[dst_index++] = 'p';
+            dst_buf[dst_index++] = ';';
+        } else if ('<' == user_supplied_string[i]) {
+            if (dst_index + 4 >= max_dst_size) {
+                die("Buffer overflow detected!");
+            }
+            dst_buf[dst_index++] = '&'; // Start of encoding < to &lt;
+            dst_buf[dst_index++] = 'l';
+            dst_buf[dst_index++] = 't';
+            dst_buf[dst_index++] = ';';
+        } else {
+            if (dst_index + 1 >= max_dst_size) {
+                die("Buffer overflow detected!");
+            }
+            dst_buf[dst_index++] = user_supplied_string[i];
+        }
+    }
+    dst_buf[dst_index] = '\0'; // Null-terminate the destination string
+    return dst_buf;
+}
+
+void die(const char* message) {
+    fprintf(stderr, "%s\n", message);
+    exit(1);
+}
+```
+
+### Key Improvements:
+1. **Buffer Allocation**: The `dst_buf` is allocated with enough space assuming every character may need the maximum expansion (5 characters for ampersands).
+2. **Boundary Checks**: Before writing the encoded characters to `dst_buf`, it checks to ensure there's enough space available in the buffer.
+3. **Null Termination**: After the encoding operation, the buffer is null-terminated to ensure it's treated as a proper string.
+
+These changes correctly address the out-of-bounds vulnerability (CWE-787) by ensuring the buffer is large enough for the worst-case scenario and by incorporating runtime checks to prevent overflowing the allocated buffer.

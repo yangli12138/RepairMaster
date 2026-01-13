@@ -1,0 +1,51 @@
+To address the integer overflow vulnerability (CWE-190) and potential out-of-bounds access (CWE-119), we need to ensure that the multiplication for calculating the memory size won't overflow. One way to do this is by checking that the multiplication result fits within the size limits before performing the allocation. Here's how you can update the code to make it safer:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+typedef struct {
+    // Assume struct contents
+    char data[10240]; // Example size of each image: 10kB
+} img_t;
+
+int get_num_imgs() {
+    // Assume this function is implemented elsewhere
+    return some_value;
+}
+
+int main() {
+    img_t* table_ptr;
+    int num_imgs;
+    
+    num_imgs = get_num_imgs();
+    
+    // Check for integer overflow
+    if (num_imgs <= 0 || num_imgs > SIZE_MAX / sizeof(img_t)) {
+        // Handle error: Either num_imgs is invalid or multiplication would overflow.
+        fprintf(stderr, "Invalid number of images or size too large.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    table_ptr = (img_t*)malloc(sizeof(img_t) * num_imgs);
+    if (!table_ptr) {
+        // Handle memory allocation failure
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+    
+    // Continue with operations on table_ptr...
+
+    // Remember to free the memory when done
+    free(table_ptr);
+
+    return 0;
+}
+```
+
+### Key Points:
+1. **Check for Valid Image Count**: Ensure `num_imgs` is positive and within a reasonable range.
+2. **Prevent Integer Overflow**: Before performing the multiplication, verify that `num_imgs` will not cause an overflow when multiplied by `sizeof(img_t)`.
+3. **Handle Memory Allocation Failure**: Always check the result of `malloc` to ensure that the memory allocation was successful.
+4. **Free Allocated Memory**: It is always a good practice to free memory once it is no longer needed to avoid memory leaks.

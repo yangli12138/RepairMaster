@@ -1,0 +1,61 @@
+To address the vulnerability present in the code, it is necessary to add checks for negative values and handle integer overflow conditions. Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#define MAX_DIM 100
+
+typedef struct {
+    // Define your board square structure here
+} board_square_t;
+
+void die(const char *message) {
+    fprintf(stderr, "%s", message);
+    exit(EXIT_FAILURE);
+}
+
+int main() {
+    int m, n, error;
+    board_square_t *board;
+
+    printf("Please specify the board height: \n");
+    error = scanf("%d", &m);
+    if (EOF == error || m < 0) {
+        die("Invalid input for height: Please enter a non-negative integer.\n");
+    }
+
+    printf("Please specify the board width: \n");
+    error = scanf("%d", &n);
+    if (EOF == error || n < 0) {
+        die("Invalid input for width: Please enter a non-negative integer.\n");
+    }
+
+    if (m > MAX_DIM || n > MAX_DIM) {
+        die("Value too large: Please enter values less than or equal to 100.\n");
+    }
+
+    // Check for potential overflow in multiplication
+    if (m > 0 && n > 0 && n > INT_MAX / m) {
+        die("Board size too large: Integer overflow detected.\n");
+    }
+
+    board = (board_square_t*) malloc(m * n * sizeof(board_square_t));
+    if (!board) {
+        die("Memory allocation failed.\n");
+    }
+
+    // Add your processing logic here
+
+    free(board); // Free allocated memory
+    return 0;
+}
+```
+
+### Key Changes:
+1. **Negative Value Check:** Added checks to ensure that the user-provided dimensions (`m` and `n`) are non-negative.
+2. **Integer Overflow Check:** Added a check to detect and handle potential integer overflow during the multiplication of `m` and `n`, ensuring that we don't allocate more memory than feasible.
+3. **Memory Allocation Check:** Added a check for `malloc` to ensure the memory is successfully allocated, handling the case where memory allocation might fail.
+
+These modifications should make the program more robust against improper inputs and potential exploitation via resource consumption or integer overflow vulnerabilities.

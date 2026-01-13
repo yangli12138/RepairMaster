@@ -1,0 +1,72 @@
+To mitigate the risk of DNS spoofing and ensure that the host is correctly identified, you can use reverse DNS lookup followed by a forward DNS lookup to ensure consistency. Here's how you can modify the code to address the vulnerability:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdbool.h>
+
+bool is_trusted_host(const char *ip_addr_string, const char *expected_host) {
+    struct hostent *hp;
+    struct in_addr myaddr;
+    char **alias;
+    bool trusted = false;
+
+    // Convert the IP address string to an in_addr
+    if (inet_aton(ip_addr_string, &myaddr) == 0) {
+        fprintf(stderr, "Invalid IP address format.\n");
+        return false;
+    }
+
+    // Reverse DNS lookup: Get the hostname associated with the IP address
+    hp = gethostbyaddr((char *)&myaddr, sizeof(struct in_addr), AF_INET);
+    if (hp == NULL) {
+        fprintf(stderr, "No host found for the given IP address.\n");
+        return false;
+    }
+
+    // Forward DNS lookup to verify the hostname matches the original IP
+    struct hostent *forward_hp = gethostbyname(hp->h_name);
+    if (forward_hp == NULL) {
+        fprintf(stderr, "Failed to resolve the hostname.\n");
+        return false;
+    }
+
+    // Compare each address from forward lookup to the original IP address
+    for (alias = forward_hp->h_addr_list; *alias != NULL; alias++) {
+        if (memcmp(*alias, &myaddr, sizeof(struct in_addr)) == 0) {
+            trusted = true;
+            break;
+        }
+    }
+
+    // Check if the resolved hostname matches the expected trusted hostname
+    if (trusted && strncmp(hp->h_name, expected_host, strlen(expected_host)) == 0) {
+        return true;
+    }
+
+    return false;
+}
+
+int main() {
+    const char *ip_addr_string = "127.0.0.1"; // Example IP address
+    const char *trusted_host = "trustme.example.com"; // Example trusted host
+
+    if (is_trusted_host(ip_addr_string, trusted_host)) {
+        printf("Host is trusted.\n");
+    } else {
+        printf("Host is not trusted.\n");
+    }
+
+    return 0;
+}
+```
+
+### Key Improvements:
+1. **Reverse & Forward DNS Verification:** After retrieving the hostname via reverse DNS, perform a forward DNS lookup on that hostname to verify it resolves back to the original IP address, ensuring the authenticity of the DNS response.
+   
+2. **String Matching:** Use `strlen(expected_host)` instead of `sizeof(tHost)` to correctly get the length of the expected hostname string.
+
+These changes significantly increase the reliability of verifying the trustworthiness of the host, reducing the risk of a DNS spoofing attack.

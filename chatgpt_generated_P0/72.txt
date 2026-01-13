@@ -1,0 +1,64 @@
+To address the vulnerability of uncontrolled resource allocation in the given code, we need to establish limits on the amount of data written to the file. We can achieve this by defining a maximum file size in bytes and checking whether this limit would be exceeded before writing additional data. I will refactor the code to include this logic:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+#define FILENAME_SIZE 256
+#define BUFFER_SIZE 1024
+#define MAX_FILE_SIZE (5 * 1024 * 1024) // 5 MB max file size
+#define FAIL -1
+
+int openSocketConnection(char *host, int port);
+int getNextMessage(int socket, char *buffer, int bufferSize);
+int openFileToWrite(const char *filename);
+int writeToFile(const char *buffer, int bytesToWrite);
+void closeFile();
+void closeSocket(int socket);
+
+int writeDataFromSocketToFile(char *host, int port) {
+    char filename[FILENAME_SIZE];
+    char buffer[BUFFER_SIZE];
+    int socket = openSocketConnection(host, port);
+    int totalBytesWritten = 0;
+    
+    if (socket < 0) {
+        printf("Unable to open socket connection\n");
+        return FAIL;
+    }
+
+    if (getNextMessage(socket, filename, FILENAME_SIZE) > 0) {
+        if (openFileToWrite(filename) > 0) {
+            int bytesRead;
+            while ((bytesRead = getNextMessage(socket, buffer, BUFFER_SIZE)) > 0) {
+                // Check if writing this data would exceed the maximum file size
+                if (totalBytesWritten + bytesRead > MAX_FILE_SIZE) {
+                    printf("File size limit exceeded, stopping.\n");
+                    break;
+                }
+
+                if (!(writeToFile(buffer, bytesRead) > 0)) {
+                    printf("Error writing to file\n");
+                    break;
+                }
+
+                totalBytesWritten += bytesRead;
+            }
+            closeFile();
+        }
+    }
+
+    closeSocket(socket);
+    return 0;
+}
+```
+
+### Key Changes:
+
+1. **MAX_FILE_SIZE**: Defined a maximum file size (5 MB in this example) to prevent unlimited data writing.
+
+2. **totalBytesWritten**: This variable keeps track of the number of bytes written to the file. It helps enforce the limit defined by `MAX_FILE_SIZE`.
+
+3. **Limit Check**: Before writing each batch of data, the code checks if the total written data would exceed `MAX_FILE_SIZE`. If it does, it stops data writing with an informative message.
+
+These changes introduce file size throttling to prevent resource exhaustion, addressing the CWE-770 vulnerability.

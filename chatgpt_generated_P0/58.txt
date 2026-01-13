@@ -1,0 +1,37 @@
+To address the vulnerability of unchecked return values from the `pthread_mutex_lock` function, and ensure thread safety, the code should be modified as follows:
+
+```c
+#include <pthread.h>
+#include <stdio.h>
+
+int f(pthread_mutex_t *mutex) {
+    int result;
+
+    // Attempt to acquire the mutex lock
+    result = pthread_mutex_lock(mutex);
+    if (0 != result) {
+        // Handle the error, e.g., log it and return the error code
+        fprintf(stderr, "Failed to acquire mutex lock: %d\n", result);
+        return result;
+    }
+
+    /* access shared resource */
+
+    // Always release the mutex lock and return the result
+    result = pthread_mutex_unlock(mutex);
+    if (0 != result) {
+        // Handle the error, e.g., log it and return the error code
+        fprintf(stderr, "Failed to release mutex lock: %d\n", result);
+        return result;
+    }
+
+    return 0; // Indicate success
+}
+```
+
+### Explanation:
+1. **Error Checking**: The return value of `pthread_mutex_lock` is checked. If it fails to acquire the lock (non-zero return value), the function logs an error message and returns the error code.
+2. **Resource Access**: After successfully acquiring the lock, shared resources can be safely accessed.
+3. **Mutex Release**: The return value of `pthread_mutex_unlock` is also checked to ensure the lock is successfully released.
+4. **Logging**: In both failure cases, an error message is printed to standard error, which aids in debugging and logging the issues.
+5. **Return Value**: The function consistently returns an error code upon encountering issues, or 0 if it successfully locks and unlocks the mutex. This indicates success or failure to the caller, enabling further error handling if necessary.

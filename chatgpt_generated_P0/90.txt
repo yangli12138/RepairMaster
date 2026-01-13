@@ -1,0 +1,24 @@
+To address the off-by-one error in the code, we need to ensure that the loop does not exceed the bounds of the `filename` array. Additionally, we should handle the end-of-file (`EOF`) condition properly. Here is the corrected version of the code:
+
+```c
+#define PATH_SIZE 60
+
+char filename[PATH_SIZE];
+
+for (i = 0; i < PATH_SIZE - 1; i++) {  // Use PATH_SIZE - 1 to leave space for the null terminator
+    char c = getc();
+    if (c == EOF) {  // Correctly check if c equals EOF
+        filename[i] = '\0';
+        break;  // Exit the loop once EOF is encountered
+    }
+    filename[i] = c;
+}
+
+// Ensure the string is null-terminated in case EOF was not encountered
+filename[PATH_SIZE - 1] = '\0';
+```
+
+### Key Changes:
+1. **Loop Condition**: Changed `i <= PATH_SIZE` to `i < PATH_SIZE - 1` to avoid writing past the bounds of the array and to ensure there's space left for a null terminator.
+2. **EOF Handling**: Changed the string 'EOF' to the proper constant `EOF` to correctly detect the end of file.
+3. **Null Termination**: The loop exits upon reading `EOF`, placing a null terminator, ensuring that the string remains properly terminated even if `EOF` isn't encountered within bounds.

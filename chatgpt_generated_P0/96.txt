@@ -1,0 +1,57 @@
+To address the vulnerability in the provided C code, ensure that the `messageBody` is not used after it has been freed. To do this, we should log the error before releasing the allocated memory. Here's the revised code:
+
+```c
+#define FAIL 0
+#define SUCCESS 1
+#define ERROR -1
+#define MAX_MESSAGE_SIZE 32
+
+int getMessageLength(char *messageLengthString); // Assuming this is defined elsewhere
+int processMessageBody(char *messageBody); // Assuming this is defined elsewhere
+void logError(const char *errorMessage, char *details); // Assuming this is defined elsewhere
+
+int processMessage(char **message)
+{
+    int result = SUCCESS;
+
+    int length = getMessageLength(message[0]);
+    char *messageBody;
+
+    if ((length > 0) && (length < MAX_MESSAGE_SIZE)) {
+        messageBody = (char*)malloc(length * sizeof(char));
+
+        if (messageBody == NULL) {
+            // Handle malloc failure
+            printf("Memory allocation failed\n");
+            return FAIL;
+        }
+        
+        // Copy the message body into the allocated buffer
+        strncpy(messageBody, &message[1][0], length);
+        messageBody[length] = '\0'; // Ensure null-termination
+
+        int success = processMessageBody(messageBody);
+
+        if (success == ERROR) {
+            result = ERROR;
+            logError("Error processing message", messageBody);
+        }
+
+        // Free the allocated memory after it has been logged
+        free(messageBody);
+    } else {
+        printf("Unable to process message; invalid message length\n");
+        result = FAIL;
+    }
+
+    return result;
+}
+```
+
+### Key Modifications:
+1. **Order of Operations**: Move the `logError` call before the `free(messageBody)` to ensure that the message body is not used after being freed.
+2. **Memory Allocation Check**: Add a check to ensure the allocation was successful with `malloc`.
+3. **Safe String Copy**: Use `strncpy` to safely copy the message body into the allocated buffer, and ensure it is null-terminated.
+4. **Error Handling**: Added a basic error handling mechanism when `malloc` fails to allocate memory. 
+
+This updated code ensures proper memory management practices and prevents the potential use of the resource after it has been released.

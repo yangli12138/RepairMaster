@@ -1,0 +1,39 @@
+To fix the vulnerability in the provided code, we need to ensure that we do not attempt to free pointers that do not point to dynamically allocated memory. In this case, since `strsep` does not allocate new memory but rather modifies the original input string, it's incorrect to attempt to free any pointers that point within that string. 
+
+Here's the repaired code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char *inputstring = strdup("This is a sample string");  // Make a copy that we can modify
+    char *argv[10], **ap;
+    int i = 0;
+
+    // Tokenize inputstring
+    for (ap = argv; (*ap = strsep(&inputstring, " \t")) != NULL;) {
+        if (**ap != '\0') {
+            if (++ap >= &argv[10])
+                break;
+        }
+    }
+
+    // Print each token as a demonstration
+    for (i = 0; argv[i] != NULL; i++) {
+        printf("Token %d: %s\n", i, argv[i]);
+    }
+
+    // No free operation needed on elements of argv, as they point to the middle of inputstring
+    free(argv[0]);  // Correctly free the duplicated inputstring
+    return 0;
+}
+```
+
+### Explanation:
+
+1. **Using `strdup`:** We use `strdup` to create a duplicate of `inputstring` that we can safely modify and later free. `strdup` allocates memory for a copy of the string, which can be safely freed after use.
+
+2. **Free the correct pointer:** We free `argv[0]`, which points to the start of the duplicated inputstring that was allocated with `strdup`. All tokens still point to various positions of this original allocated memory.
+
+3. **Remove `free(ap[4])`:** The original problematic free call is removed, as `strsep` does not allocate new memory, and `argv` points within the `inputstring` buffer. The cleanup now properly frees the duplicated input string instead of incorrect internal pointers.

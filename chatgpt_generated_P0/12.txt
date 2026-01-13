@@ -1,0 +1,78 @@
+To address the vulnerability, we need to allocate an additional slot for the NULL pointer which marks the end of the widget list. This ensures that there is no out-of-bounds write when adding the NULL pointer. Here's the revised code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_NUM_WIDGETS 1000
+
+typedef struct {
+    // Widget structure definition
+} Widget;
+
+Widget* InitializeWidget() {
+    // Function to initialize a widget
+    return (Widget *)malloc(sizeof(Widget)); // Assume this allocates and initializes a widget
+}
+
+unsigned int GetUntrustedSizeValue() {
+    // This function should be replaced with a secure way to get user input
+    // For demo purposes, let's assume it returns a value between 0 and MAX_NUM_WIDGETS
+    return 500; // Example value
+}
+
+void ExitError(const char *message) {
+    fprintf(stderr, "%s\n", message);
+    exit(EXIT_FAILURE);
+}
+
+void showWidgets(Widget **widgets) {
+    // Function to display or process widgets
+    // ...
+}
+
+int main() {
+    int i;
+    unsigned int numWidgets;
+    Widget **WidgetList;
+
+    numWidgets = GetUntrustedSizeValue();
+    if ((numWidgets == 0) || (numWidgets > MAX_NUM_WIDGETS)) {
+        ExitError("Incorrect number of widgets requested!");
+    }
+    
+    // Allocate one additional space for the NULL terminator
+    WidgetList = (Widget **)malloc((numWidgets + 1) * sizeof(Widget *)); 
+    if (WidgetList == NULL) {
+        ExitError("Memory allocation failed!");
+    }
+    printf("WidgetList ptr=%p\n", (void *)WidgetList);
+
+    for (i = 0; i < numWidgets; i++) {
+        WidgetList[i] = InitializeWidget();
+        if (WidgetList[i] == NULL) {
+            // Handle widget initialization failure
+            ExitError("Failed to initialize widget!");
+        }
+    }
+    WidgetList[numWidgets] = NULL; // Correctly store the NULL pointer
+
+    showWidgets(WidgetList);
+
+    // Free the allocated memory after use
+    for (i = 0; i < numWidgets; i++) {
+        free(WidgetList[i]);
+    }
+    free(WidgetList);
+
+    return 0;
+}
+```
+
+### Key Modifications:
+1. **Memory Allocation:** The allocation for `WidgetList` now includes an additional slot for the NULL pointer, making it `(numWidgets + 1) * sizeof(Widget *)`.
+2. **Memory Allocation Check:** A check is added to ensure `WidgetList` is not NULL, which is a good practice to handle memory allocation failures.
+3. **Casting the result of `malloc`:** The result of `malloc` is explicitly cast to `(Widget **)`, which is generally unnecessary in C, but might be preferred for some coding styles or compiler configurations.
+4. **Error Handling for `InitializeWidget`:** There is a check to ensure that each call to `InitializeWidget` does not return NULL.
+
+These changes will prevent the out-of-bounds write vulnerability by ensuring that there's enough allocated memory for both the widgets and the terminating NULL pointer.

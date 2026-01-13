@@ -1,0 +1,39 @@
+To address the potential race condition vulnerability in the given code, it's important to handle any errors that might occur during the lock acquisition and release processes. Here's the repaired code that checks for errors in both `pthread_mutex_lock` and `pthread_mutex_unlock`:
+
+```c
+#include <pthread.h>
+#include <stdio.h>
+
+int f(pthread_mutex_t *mutex) {
+    int result;
+
+    // Attempt to lock the mutex
+    result = pthread_mutex_lock(mutex);
+    if (result != 0) {
+        // Handle the error (e.g., log it and return the error code)
+        fprintf(stderr, "Error acquiring mutex lock: %d\n", result);
+        return result;
+    }
+
+    /* Access shared resource */
+
+    // Attempt to unlock the mutex
+    result = pthread_mutex_unlock(mutex);
+    if (result != 0) {
+        // Handle the error (e.g., log it and report it)
+        fprintf(stderr, "Error releasing mutex lock: %d\n", result);
+        return result;
+    }
+
+    // Return 0 if everything was successful
+    return 0;
+}
+```
+
+### Key Improvements:
+
+1. **Error Checking**: Both `pthread_mutex_lock` and `pthread_mutex_unlock` are now checked for their return values. The code logs an error message and returns if either function call fails.
+
+2. **Error Reporting**: Errors are reported by printing a message to standard error with relevant information and by returning the error code to the caller, so it can take necessary action.
+
+These improvements ensure that any issues with mutex operations are detected promptly, preventing undetected race conditions from causing unpredictable behavior.

@@ -1,0 +1,26 @@
+To address the vulnerability, we need to ensure that the `delete[]` operation is only called on memory that was allocated on the heap using `new[]`. To achieve this, a flag can be used to track whether heap memory was allocated. Here's the corrected code:
+
+```cpp
+class A {
+    void foo(bool heap);
+};
+
+void A::foo(bool heap) {
+    int localArray[2] = {11, 22};
+    int* p = localArray; // Initially point to stack memory
+    bool isHeapAllocated = false; // Flag to track memory allocation
+
+    if (heap) {
+        p = new int[2];
+        isHeapAllocated = true; // Mark that we have heap memory allocated
+    }
+
+    if (isHeapAllocated) {
+        delete[] p; // Only delete if heap memory was allocated
+    }
+}
+```
+
+### Changes Made:
+1. **Flag Introduction**: Added a boolean variable `isHeapAllocated` to track whether the memory was allocated on the heap.
+2. **Conditional Deletion**: `delete[]` is only called if `isHeapAllocated` is set to `true`, ensuring that we only attempt to free heap memory.

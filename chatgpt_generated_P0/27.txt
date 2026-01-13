@@ -1,0 +1,50 @@
+To address the vulnerability CWE-269: Improper Privilege Management, a secure approach is needed when dealing with user IDs, especially when temporarily dropping privileges. Below is the repaired version of the provided code, ensuring proper privilege management:
+
+```c
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+
+int main() {
+    // Save original UID and EUID
+    uid_t original_uid = getuid();
+    uid_t original_euid = geteuid();
+
+    // Check if we are running as root
+    if (original_euid != 0) {
+        fprintf(stderr, "This program must be run as root.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set effective UID to real UID to drop privileges
+    if (seteuid(original_uid) < 0) {
+        perror("Failed to drop privileges");
+        exit(EXIT_FAILURE);
+    }
+
+    // Regular operations
+    // Perform actions with dropped privileges
+    // ...
+
+    // Restore effective UID to root
+    if (seteuid(original_euid) < 0) {
+        perror("Failed to restore privileges");
+        exit(EXIT_FAILURE);
+    }
+
+    // Root operations
+    // Perform actions that need elevated privileges
+    // ...
+
+    return 0;
+}
+```
+
+**Key Improvements:**
+1. **Validation:** The program checks if it has started with the appropriate privileges (e.g., root) before attempting to modify the effective UID.
+2. **Error Handling:** Each call to `seteuid()` has error checking. If it fails, the program exits with an error message to prevent unexpected behaviors.
+3. **Privilege Dropping:** It securely drops privileges by setting the effective UID to the real UID initially.
+4. **Privilege Restoring:** It properly restores the effective UID after the operations that required lower privilege are completed.
+
+These changes ensure the program does not inadvertently keep higher privileges longer than necessary, thus reducing the attack surface for exploitation.

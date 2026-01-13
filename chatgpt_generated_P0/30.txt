@@ -1,0 +1,30 @@
+To address the buffer overflow vulnerability present in the code, you should replace the `gets()` function with a safer alternative like `fgets()`, which allows you to specify the maximum size of the buffer, preventing overflow. Here is the repaired code:
+
+```c
+#include <stdio.h>
+
+int main() {
+    char buf[24];
+    printf("Please enter your name and press <Enter>\n");
+    fgets(buf, sizeof(buf), stdin);
+    
+    // If there is a newline character in the input, remove it
+    size_t len = strlen(buf);
+    if (len > 0 && buf[len-1] == '\n') {
+        buf[len-1] = '\0';
+    }
+
+    // Continue with other operations using buf
+    printf("Hello, %s!\n", buf);
+
+    return 0;
+}
+```
+
+In this revised code:
+
+1. **`fgets(buf, sizeof(buf), stdin);`** is used instead of `gets(buf);`. This function limits the number of characters read, preventing a buffer overflow.
+2. After reading the input, a check for a newline character is performed. If present, it's replaced with a null terminator (`'\0'`) to avoid having the newline character in the resulting string.
+3. Adjust all code blocks that utilize the buffer with the assurance that the buffer overflow risk is mitigated. 
+
+This approach ensures that the input does not exceed the predefined buffer size, thereby protecting against buffer overflow vulnerabilities.

@@ -1,0 +1,14 @@
+To address the vulnerability of an out-of-bounds write in the given C code, you need to ensure that the array's size matches the number of elements you intend to store. In this case, the array should be able to hold four elements instead of three. Here's the corrected code:
+
+```c
+int id_sequence[4];
+
+/* Populate the id array. */
+
+id_sequence[0] = 123;
+id_sequence[1] = 234;
+id_sequence[2] = 345;
+id_sequence[3] = 456; // Now this assignment is within bounds
+```
+
+By changing the array size from 3 to 4, all four assignments fit within the bounds of the array, and the vulnerability is resolved.

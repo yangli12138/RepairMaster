@@ -1,0 +1,52 @@
+To address the CWE-787: Out-of-bounds Write vulnerability in the provided C code, we should ensure that the length of the hostname being copied into the buffer does not exceed the buffer's size. Instead of using `strcpy`, which does not perform any bounds checking, we should use `strncpy`, which allows us to specify the maximum number of characters to copy. Additionally, it's crucial to ensure the buffer is null-terminated. Here is the corrected code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define HOSTNAME_MAX_LEN 63 // as 64 includes space for the null terminator
+
+void validate_addr_form(const char *addr) {
+    // Here should be a logic to validate if an address has a correct format,
+    // like checking for valid IPv4 or IPv6 patterns.
+}
+
+void host_lookup(char *user_supplied_addr) {
+    struct hostent *hp;
+    in_addr_t addr;
+    char hostname[HOSTNAME_MAX_LEN + 1]; // Ensure space for null terminator
+    
+    validate_addr_form(user_supplied_addr);
+    
+    addr = inet_addr(user_supplied_addr);
+    
+    if (addr == INADDR_NONE) {
+        fprintf(stderr, "Invalid IP address format.\n");
+        return;
+    }
+
+    hp = gethostbyaddr(&addr, sizeof(struct in_addr), AF_INET);
+    if (hp == NULL) {
+        fprintf(stderr, "Host not found or DNS server is down.\n");
+        return;
+    }
+
+    // Use strncpy to safely copy no more than HOSTNAME_MAX_LEN characters
+    strncpy(hostname, hp->h_name, HOSTNAME_MAX_LEN);
+    // Ensure null termination
+    hostname[HOSTNAME_MAX_LEN] = '\0';
+
+    // Now, hostname is safely set
+    printf("Hostname: %s\n", hostname);
+}
+```
+
+Key changes:
+
+1. **Buffer Size Definition**: Defined `HOSTNAME_MAX_LEN` to account for the buffer size, ensuring space for a null terminator.
+2. **Use of `strncpy`**: Replaced `strcpy` with `strncpy` to protect against buffer overflow.
+3. **Null-Termination**: Explicitly set the last character of the buffer to `\0` to ensure it is null-terminated.
+4. **Error Handling**: Added checks for `inet_addr` and `gethostbyaddr`.
+5. **Validation Function Placeholder**: Indicated where a comprehensive validation function for the IP address should be implemented.

@@ -1,0 +1,80 @@
+To address the vulnerability in the provided C code snippet using the `EVP_des_ecb()` function, it's essential to replace the Data Encryption Standard (DES) with a more secure cryptographic algorithm. AES (Advanced Encryption Standard) is a secure and widely recommended algorithm. Here's the repaired code using AES:
+
+```c
+#include <openssl/evp.h>
+#include <string.h>
+#include <stdio.h>
+
+void encrypt(const unsigned char *plaintext, int plaintext_len, const unsigned char *key, 
+             const unsigned char *iv, unsigned char *ciphertext) {
+    EVP_CIPHER_CTX *ctx;
+
+    int len;
+    int ciphertext_len;
+
+    // Create and initialize the context
+    if (!(ctx = EVP_CIPHER_CTX_new())) {
+        perror("EVP_CIPHER_CTX_new failed");
+        return;
+    }
+
+    // Initialize the encryption operation. Use AES-256-CBC as the algorithm
+    if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+        perror("EVP_EncryptInit_ex failed");
+        EVP_CIPHER_CTX_free(ctx);
+        return;
+    }
+
+    // Provide the message to be encrypted, and obtain the encrypted output
+    if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len)) {
+        perror("EVP_EncryptUpdate failed");
+        EVP_CIPHER_CTX_free(ctx);
+        return;
+    }
+    ciphertext_len = len;
+
+    // Finalize the encryption
+    if (1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) {
+        perror("EVP_EncryptFinal_ex failed");
+        EVP_CIPHER_CTX_free(ctx);
+        return;
+    }
+    ciphertext_len += len;
+
+    // Clean up
+    EVP_CIPHER_CTX_free(ctx);
+
+    printf("Ciphertext length: %d\n", ciphertext_len);
+}
+
+int main() {
+    // Example usage
+    const unsigned char *key = (unsigned char *)"01234567890123456789012345678901"; // 32 bytes for AES-256
+    const unsigned char *iv = (unsigned char *)"0123456789012345"; // 16 bytes for AES
+    const unsigned char *plaintext = (unsigned char *)"This is a sensitive data.";
+
+    unsigned char ciphertext[128];
+
+    encrypt(plaintext, strlen((char *)plaintext), key, iv, ciphertext);
+
+    // Print the ciphertext
+    for (int i = 0; i < strlen((char *)plaintext); i++) {
+        printf("%02x", ciphertext[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
+```
+
+### Key Changes and Considerations:
+
+1. **Algorithm Change**: Replaced DES with AES-256-CBC, which is considered secure and is widely accepted for encrypting data.
+
+2. **Key Length**: AES-256 requires a 32-byte key. Ensure your key is securely generated and stored.
+
+3. **IV (Initialization Vector)**: Used an IV for CBC mode. The IV should be random and unique for each encryption operation but can be public.
+
+4. **Error Handling**: Added basic error handling to properly clean up resources if any cryptographic operation fails.
+
+This code ensures cryptographic security using an up-to-date and robust algorithm while maintaining the general flow and logic of the encryption process.

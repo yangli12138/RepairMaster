@@ -1,0 +1,31 @@
+To address the vulnerability in the provided code, we should also ensure that the allocated memory doesn't exceed a defined maximum limit. Additionally, we should change the data type to `unsigned int` to avoid issues with negative values. Here's the revised code with these changes:
+
+```c
+#include <stdio.h>
+
+#define SUCCESS 0
+#define FAIL 1
+#define MAX_LENGTH 1024  // Define a maximum length for the message
+
+unsigned int getMessageLength(char *lengthArray);
+
+void processMessageBody(char *body); // Assuming this function is defined elsewhere
+
+/* processMessage accepts a two-dimensional character array of the form [length][body] containing the message to be processed */
+int processMessage(char **message) {
+    char *body;
+    unsigned int length = getMessageLength(message[0]);
+
+    // Ensure length is within allowed limits
+    if (length > 0 && length < MAX_LENGTH) {
+        body = &message[1][0];
+        processMessageBody(body);
+        return SUCCESS;
+    } else {
+        printf("Unable to process message; invalid or too large message length");
+        return FAIL;
+    }
+}
+```
+
+In this repaired code, we include a check to ensure that the length of the message body does not exceed `MAX_LENGTH`. This helps prevent excessive memory allocation and resource exhaustion. We also use `unsigned int` for `length` to avoid dealing with negative lengths. Make sure to adjust `MAX_LENGTH` according to the specific application requirements and available system resources.

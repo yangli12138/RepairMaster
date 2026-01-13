@@ -1,0 +1,34 @@
+To address the vulnerability, it's important to check the return value of `fgets()` to ensure it successfully reads input and properly handles cases where it does not. Additionally, we should ensure the null-termination of the `buf` array. Here is the corrected code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char buf[10], cp_buf[10];
+
+    // Check if fgets successfully reads input
+    if (fgets(buf, sizeof(buf), stdin) != NULL) {
+        // Ensure buf is null-terminated
+        buf[strcspn(buf, "\n")] = '\0'; // Remove the newline character if present
+
+        // Safe copy to cp_buf with null termination
+        strncpy(cp_buf, buf, sizeof(cp_buf) - 1);
+        cp_buf[sizeof(cp_buf) - 1] = '\0'; // Ensure cp_buf is null-terminated
+
+        printf("Copied buffer: %s\n", cp_buf);
+    } else {
+        // Handle the error appropriately
+        fprintf(stderr, "Error reading input or end of file reached\n");
+        return 1; // Return an error code
+    }
+
+    return 0;
+}
+```
+
+### Key Improvements:
+- **Return Value Checking:** We check if `fgets()` returns a non-NULL value before proceeding.
+- **Null-Termination:** We ensure that the `buf` string is properly null-terminated by using `strcspn()` to find and replace the newline character with a null terminator.
+- **Safe Copy:** An `strncpy()` is used to safely copy data into `cp_buf` ensuring it is also null-terminated.
+- **Error Handling:** If `fgets()` returns NULL, it properly handles the error by printing an error message and returning a non-zero exit code.

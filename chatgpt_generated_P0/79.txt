@@ -1,0 +1,57 @@
+To address the vulnerabilities in the original code, we need to perform proper error checking and bounds checking. Here's the repaired version of the code:
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+
+void validate_addr_form(const char *addr);
+
+void host_lookup(char *user_supplied_addr) {
+    struct hostent *hp;
+    in_addr_t addr;
+    char hostname[64];
+
+    // Ensure the user-supplied address is in the right format
+    validate_addr_form(user_supplied_addr);
+
+    // Convert the address from a string to an in_addr_t
+    addr = inet_addr(user_supplied_addr);
+    if (addr == INADDR_NONE) {
+        fprintf(stderr, "Invalid IP address format.\n");
+        return;
+    }
+
+    // Perform the host lookup
+    hp = gethostbyaddr(&addr, sizeof(addr), AF_INET);
+    if (hp == NULL) {
+        fprintf(stderr, "Failed to resolve hostname.\n");
+        return;
+    }
+
+    // Use snprintf to prevent buffer overflow
+    snprintf(hostname, sizeof(hostname), "%s", hp->h_name);
+
+    // Successfully resolved hostname
+    printf("Resolved hostname: %s\n", hostname);
+}
+
+// Example implementation of validate_addr_form
+void validate_addr_form(const char *addr) {
+    // Perform any necessary checks to validate the address format
+    // This is a placeholder function - implementation details can vary
+}
+
+int main() {
+    char ip[] = "8.8.8.8";
+    host_lookup(ip);
+    return 0;
+}
+```
+
+### Key Fixes:
+1. **Error Checking for `inet_addr`**: Added a check to ensure the IP address format is valid, using `INADDR_NONE` to detect errors.
+2. **Error Checking for `gethostbyaddr`**: Added a check to ensure that the result of `gethostbyaddr` is not `NULL` to prevent a NULL pointer dereference.
+3. **Bounds Checking for Buffer Copying**: Used `snprintf` instead of `strcpy` to securely copy the hostname into the `hostname` buffer, preventing buffer overflow issues.

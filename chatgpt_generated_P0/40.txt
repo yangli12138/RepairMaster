@@ -1,0 +1,33 @@
+To address the vulnerability of uncontrolled recursion in the provided C code, we need to ensure that the condition `flg` is eventually set or modified such that it breaks the recursive calls. Here's the repaired code:
+
+```c
+#include <stdio.h>
+
+// Function to perform some recursive work
+void do_something_recursive(int flg) {
+    // Simulate doing some work - this could be any operation
+    printf("Doing some work, flg: %d\n", flg);
+
+    // Modify the value of flg to eventually break out of the recursion
+    flg--;
+
+    // Check the exit condition before making the recursive call
+    if (flg > 0) {
+        do_something_recursive(flg); // Recursive call
+    }
+}
+
+int main() {
+    int flag = 5; // Set to a positive number to allow some iterations
+    do_something_recursive(flag); // Start the recursive process
+    return 0;
+}
+```
+
+### Key Changes:
+
+1. **Modification of `flg`:** In each recursive call, we decrement `flg`. This ensures that eventually `flg` becomes zero, breaking the recursion loop and preventing stack overflow.
+
+2. **Exit Condition:** The condition `if (flg > 0)` ensures that the recursion only continues if `flg` is still positive.
+
+By implementing these changes, the recursion is now controlled, preventing infinite recursive calls and potential stack exhaustion.

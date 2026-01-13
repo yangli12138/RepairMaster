@@ -1,0 +1,8 @@
+To address the vulnerability in the code, we need to correctly calculate the position of the second byte of the integer pointer by treating the pointer as a char pointer from the start. This ensures that pointer arithmetic operates at the byte level, rather than at the object size level (in this case, `sizeof(int)`). Here's the repaired code:
+
+```c
+int *p = x;
+char *second_char = ((char *)p) + 1; // Correctly points to the second byte of p
+```
+
+By casting `p` to a `char*` before performing the addition, we ensure that the arithmetic is done at the byte level, correctly pointing `second_char` to the second byte of the original integer pointed to by `p`. This prevents incorrect memory access which could lead to vulnerabilities or undefined behavior.

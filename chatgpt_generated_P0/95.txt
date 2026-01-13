@@ -1,0 +1,31 @@
+To address the double free vulnerability, ensure that memory is freed only once. Typically, we can achieve this by setting the pointer to `NULL` after freeing it. Here's the corrected version of the code:
+
+```c
+char* ptr = (char*)malloc(SIZE);
+if (ptr == NULL) {
+    // Handle memory allocation failure
+    // For example, you could return an error code or exit the function
+    return; 
+}
+
+...
+
+if (abrt) {
+    free(ptr);
+    ptr = NULL; // Set pointer to NULL after freeing
+}
+
+...
+
+if (ptr != NULL) {
+    free(ptr);
+    ptr = NULL; // Ensure pointer is set to NULL after freeing
+}
+```
+
+### Explanation:
+1. **Check for `NULL`:** Before performing `free()`, ensure that `ptr` is not `NULL`. This prevents freeing memory that has already been released or wasn't allocated properly.
+
+2. **Set pointer to `NULL`:** After freeing, immediately set the pointer `ptr` to `NULL`. This prevents unintended use after memory is freed and helps in avoiding double free errors.
+
+3. **Error Handling:** Always check if the `malloc` function successfully allocated memory by verifying that the returned pointer is not `NULL`. If allocation fails, handle the error accordingly. This avoids operations on invalid memory.

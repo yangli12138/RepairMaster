@@ -1,0 +1,22 @@
+To address the vulnerability of improper certificate validation, we need to ensure that the certificate is not only present but also valid by using `SSL_get_verify_result()` to check the result of the certificate verification. Here is the corrected code:
+
+```c
+X509* cert = SSL_get_peer_certificate(ssl);
+if (cert != NULL) {
+    long verify_result = SSL_get_verify_result(ssl);
+    if (verify_result == X509_V_OK) {
+        // Certificate is valid, proceed with secret things
+        
+    } else {
+        // Certificate is not valid, handle the error appropriately
+    }
+    X509_free(cert); // Remember to free the certificate when done
+} else {
+    // No certificate was presented, handle the error appropriately
+}
+```
+
+### Key Changes:
+1. **Check Verification Result:** Use `SSL_get_verify_result()` to ensure the certificate is valid according to the verification result.
+2. **Proper Error Handling:** Implement error handling for both invalid and missing certificates.
+3. **Memory Management:** Remember to free the certificate using `X509_free()` after it is no longer needed to avoid memory leaks.

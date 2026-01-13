@@ -1,0 +1,47 @@
+To address the vulnerability, we need to ensure that the index returned by the `find` function is valid and within the bounds of `srcBuf`. If `find` returns a negative value (indicating `ch` is not found), we should handle this case properly before attempting to copy from `srcBuf`. Here's a safe way to implement the fix:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+#define BUF_SIZE 1024
+
+// Sample implementation of the find function for demonstration
+int find(const char *buffer, char ch) {
+    for (int i = 0; buffer[i] != '\0'; i++) {
+        if (buffer[i] == ch) {
+            return i;
+        }
+    }
+    return -1; // Return -1 if character is not found
+}
+
+int main() {
+    char srcBuf[BUF_SIZE] = "Sample input string for buffer";
+    char destBuf[BUF_SIZE];
+    char ch = 'i'; // Character to find in srcBuf
+
+    // Call find to get the index of the character in srcBuf
+    int index = find(srcBuf, ch);
+
+    // Check if character was found and index is within bounds
+    if (index >= 0) {
+        // Safely copy from srcBuf starting at found index
+        strncpy(destBuf, &srcBuf[index], BUF_SIZE - 1);
+        destBuf[BUF_SIZE - 1] = '\0'; // Ensure null termination
+    } else {
+        printf("Character not found in source buffer\n");
+    }
+
+    // Output the destination buffer
+    printf("Destination buffer: %s\n", destBuf);
+
+    return 0;
+}
+```
+
+### Explanation:
+- **Find Function**: Returns the index of the character `ch` if found, or `-1` if not found.
+- **Index Check**: Before using the index to access `srcBuf`, check if it is valid (i.e., `index >= 0`). This prevents out-of-bounds access.
+- **Buffer Size**: Use `BUF_SIZE - 1` for `strncpy` to leave space for the null terminator, ensuring the destination buffer is null-terminated.
+- **Error Handling**: Add a check for character not found, and print a message or handle appropriately without performing any invalid write operations.

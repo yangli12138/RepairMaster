@@ -1,0 +1,14 @@
+Here's the corrected version of the code, where the object is properly allocated with `new` and deallocated with `delete`:
+
+```cpp
+void foo() {
+    BarObj *ptr = new BarObj();
+    /* do some work with ptr here */
+
+    ...
+
+    delete ptr;
+}
+```
+
+In this revised code, the `delete` operator is used to deallocate the memory allocated with `new`, ensuring consistency and preventing undefined behavior associated with mismatched memory management functions.

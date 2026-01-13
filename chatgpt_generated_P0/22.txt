@@ -1,0 +1,74 @@
+To address the vulnerability of uncontrolled resource consumption, you need to implement checks that limit the amount of data written to the file and protect system resources. Here is the revised code with such safeguards:
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <limits.h> // for PATH_MAX
+#include <stdlib.h> // for exit()
+
+#define FILENAME_SIZE 256
+#define BUFFER_SIZE 1024
+#define MAX_FILE_SIZE 10485760 // 10 MB
+
+// Function prototypes for functions that need to be defined elsewhere
+int openSocketConnection(char *host, int port);
+int getNextMessage(int socket, char *buffer, size_t buffer_size);
+int openFileToWrite(const char *filename);
+int writeToFile(const char *buffer);
+void closeFile();
+void closeSocket(int socket);
+
+int writeDataFromSocketToFile(char *host, int port) {
+    char filename[FILENAME_SIZE];
+    char buffer[BUFFER_SIZE];
+    int socket = openSocketConnection(host, port);
+    unsigned long totalBytesWritten = 0;
+
+    if (socket < 0) {
+        printf("Unable to open socket connection\n");
+        return -1;
+    }
+
+    if (getNextMessage(socket, filename, FILENAME_SIZE) > 0) {
+        // Validate filename to prevent directory traversal attacks
+        if (strstr(filename, "..") != NULL) {
+            printf("Invalid filename\n");
+            closeSocket(socket);
+            return -1;
+        }
+
+        if (openFileToWrite(filename) > 0) {
+            int bytesRead;
+            while ((bytesRead = getNextMessage(socket, buffer, BUFFER_SIZE)) > 0) {
+                totalBytesWritten += bytesRead;
+                if (totalBytesWritten > MAX_FILE_SIZE) {
+                    printf("File size limit exceeded\n");
+                    break;
+                }
+
+                if (!(writeToFile(buffer) > 0)) {
+                    printf("Error writing to file\n");
+                    break;
+                }
+            }
+            closeFile();
+        } else {
+            printf("Error opening file for writing\n");
+        }
+    } else {
+        printf("Error reading filename from socket\n");
+    }
+
+    closeSocket(socket);
+    return 0;
+}
+```
+
+### Key Improvements:
+1. **Filename Validation:** We added a check to ensure that the filename does not contain path traversal sequences like `..`. This is important to prevent unauthorized access to files outside the intended directory.
+
+2. **File Size Limit:** We introduced a constant `MAX_FILE_SIZE` which limits the amount of data that can be written to the file (set to 10 MB in this example). When this limit is reached, further data is not written to the file, and a warning message is printed.
+
+3. **Error Messages:** More informative error messages have been added for better debugging and handling of different stages of connection and writing processes.
+
+This code revision mitigates the original risk of uncontrolled resource consumption by imposing a hard limit on the file size, which helps in protecting the system’s resources.

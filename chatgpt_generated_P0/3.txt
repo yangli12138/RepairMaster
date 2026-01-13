@@ -1,0 +1,25 @@
+To address the vulnerability in the code, we need to add a check to ensure that the `index` is not only less than the length of the array but also greater than or equal to 0. This will prevent negative indices which could lead to accessing out-of-bounds memory. Here's the repaired code:
+
+```c
+#include <stdio.h>
+
+int getValueFromArray(int *array, int len, int index) {
+    int value;
+
+    // Check that the array index is within bounds
+    if (index >= 0 && index < len) {
+        // Get the value at the specified index of the array
+        value = array[index];
+    } 
+    // If array index is invalid, then output error message
+    // and return value indicating error
+    else {
+        printf("Error: Invalid index %d. Index should be between 0 and %d.\n", index, len - 1);
+        value = -1;
+    }
+
+    return value;
+}
+```
+
+In this modified version, the code checks if `index` is both greater than or equal to 0 and less than `len`, which ensures the access is within the proper bounds. If the index is out of bounds, it prints an error message and returns `-1` to indicate an error.

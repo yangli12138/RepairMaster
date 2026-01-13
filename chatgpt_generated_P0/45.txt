@@ -1,0 +1,37 @@
+Here's the revised code to address the divide by zero vulnerability. This implementation safely checks for a zero denominator and throws a custom exception, which is then properly caught in the calling code:
+
+```cpp
+#include <iostream>
+#include <stdexcept>  // For std::runtime_error
+#include <string>
+
+class DivideByZeroException : public std::runtime_error {
+public:
+    DivideByZeroException() 
+        : std::runtime_error("Attempt to divide by zero") {}
+};
+
+double divide(double x, double y) {
+    if (y == 0) {
+        throw DivideByZeroException();
+    }
+    return x / y;
+}
+
+int main() {
+    try {
+        double result = divide(10, 0);
+        std::cout << "Result: " << result << std::endl;
+    } catch (const DivideByZeroException& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+    
+    return 0;
+}
+```
+
+### Key Improvements:
+1. **Custom Exception**: A `DivideByZeroException` class is defined to represent the specific error condition of dividing by zero.
+2. **Standard Exception Handling**: Used `std::runtime_error` for more informative exception handling.
+3. **Error Message**: Output a meaningful error message using `e.what()` to provide context for the error.
+4. **Type Safety**: Utilize C++ exception mechanisms for handling errors, which is more idiomatic and robust compared to custom integer error codes.

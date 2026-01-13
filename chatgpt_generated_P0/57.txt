@@ -1,0 +1,49 @@
+To address the vulnerabilities in the given code, we need to:
+
+1. Check the return value of `gethostbyaddr()` to ensure it's not `NULL` before proceeding.
+2. Protect against buffer overflow by using `strncpy()` instead of `strcpy()` when copying the hostname.
+
+Here is the repaired code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+void validate_addr_form(const char *addr);
+
+void host_lookup(char *user_supplied_addr) {
+    struct hostent *hp;
+    in_addr_t addr;
+    char hostname[64];
+
+    /* Routine that ensures user_supplied_addr is in the right format for conversion */
+    validate_addr_form(user_supplied_addr);
+    
+    addr = inet_addr(user_supplied_addr);
+
+    if (addr == INADDR_NONE) {
+        fprintf(stderr, "Invalid IP address format.\n");
+        return;
+    }
+
+    hp = gethostbyaddr(&addr, sizeof(addr), AF_INET);
+
+    if (hp == NULL) {
+        fprintf(stderr, "Hostname could not be resolved.\n");
+        return;
+    }
+
+    // Use strncpy to avoid buffer overflow
+    strncpy(hostname, hp->h_name, sizeof(hostname) - 1);
+    hostname[sizeof(hostname) - 1] = '\0'; // Ensure null termination
+
+    printf("The hostname for IP %s is: %s\n", user_supplied_addr, hostname);
+}
+```
+
+### Key Fixes Made:
+- **Validation Check for `gethostbyaddr()`:** Added a check for the returned value of `gethostbyaddr()`. If it returns `NULL`, we print an error message and exit the function.
+- **Buffer Overflow Prevention:** Used `strncpy()` and ensured the buffer is null-terminated to prevent buffer overflow vulnerabilities.

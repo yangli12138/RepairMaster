@@ -1,0 +1,38 @@
+To address the vulnerability in the provided code, we need to ensure that the user-provided offset is validated to be within the bounds of the array. Here's the repaired code: 
+
+```c
+#include <stdio.h>
+
+// Mockup function to simulate fetching an untrusted offset from the user
+int GetUntrustedOffset() {
+    int offset;
+    printf("Enter a number between 1 and 4 to select an item: ");
+    if (scanf("%d", &offset) != 1) {
+        printf("Invalid input.\n");
+        return -1;
+    }
+    return offset;
+}
+
+int main (int argc, char **argv) {
+    char *items[] = {"boat", "car", "truck", "train"};
+    int numItems = sizeof(items) / sizeof(items[0]);
+    int index = GetUntrustedOffset();
+
+    // Validate that the index is within the bounds of the array
+    if (index < 1 || index > numItems) {
+        printf("Invalid selection. Please enter a number between 1 and %d.\n", numItems);
+    } else {
+        printf("You selected %s\n", items[index-1]);
+    }
+
+    return 0;
+}
+```
+
+Key changes made to the code:
+1. Added validation to ensure that the input index is between `1` and the number of elements in the `items` array.
+2. Included a check for invalid input from `scanf`.
+3. The program informs the user of the valid range if an invalid selection is made. 
+
+These changes prevent out-of-bounds access to the `items` array based on the untrusted input.

@@ -1,0 +1,43 @@
+To address the vulnerability, we need to ensure that we don't copy more data into the `hostname` buffer than it can hold. We can use `strncpy` to safeguard against overflow and ensure the buffer is null-terminated, or dynamically allocate memory based on the hostname length. Here’s the modified code using `strncpy`:
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+#define HOSTNAME_BUFFER_SIZE 64
+
+void validate_addr_form(char *addr){
+    // An example validation function
+    // Ensure this is correctly implemented to validate the format of IP address
+}
+
+void host_lookup(char *user_supplied_addr) {
+    struct hostent *hp;
+    in_addr_t addr;
+    char hostname[HOSTNAME_BUFFER_SIZE]; // buffer to store hostname
+    in_addr_t inet_addr(const char *cp);
+
+    // Routine that ensures user_supplied_addr is in the right format for conversion
+    validate_addr_form(user_supplied_addr);
+
+    addr = inet_addr(user_supplied_addr);
+    hp = gethostbyaddr(&addr, sizeof(struct in_addr), AF_INET);
+
+    if (hp != NULL) {
+        // Using strncpy to prevent buffer overflow
+        strncpy(hostname, hp->h_name, HOSTNAME_BUFFER_SIZE - 1);
+        hostname[HOSTNAME_BUFFER_SIZE - 1] = '\0'; // Ensures null-terminated string
+    } else {
+        fprintf(stderr, "Error: Unable to resolve hostname\n");
+    }
+}
+```
+
+### Key Modifications:
+1. **Use of `strncpy`:** Utilizes `strncpy` to copy only as many bytes as `hostname` can hold, ensuring that it doesn't overflow the buffer.
+2. **Null-termination:** Explicitly sets the last byte of the buffer to `'\0'` in case the hostname is larger than the buffer, ensuring the string is always null-terminated.
+3. **Check for NULL:** Added error checking after `gethostbyaddr` to ensure it returned a valid pointer before proceeding.
+
+This code is a safer version, ensuring it does not perform operations outside the bounds of the specified buffer.

@@ -1,0 +1,96 @@
+To address the vulnerability related to CWE-354: Improper Validation of Integrity Check Value, we need to include proper validation and integrity checks when receiving data. In the context of UDP communication, this may involve verifying that the data received meets certain criteria or includes a proper checksum or hash to ensure its validity and integrity.
+
+Below is the revised code with basic validation added for the received message. Note that, given the context, we will introduce a simple integrity check using a pre-agreed format or checksum:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#define MAX_MSG 1024
+#define PORT 1008
+
+// Simple utility function to calculate checksum
+unsigned int calculate_checksum(const char *msg) {
+    unsigned int checksum = 0;
+    while (*msg) {
+        checksum += (unsigned int)(*msg);
+        msg++;
+    }
+    return checksum;
+}
+
+// Function to verify the message integrity
+int verify_message_integrity(const char *msg, unsigned int received_checksum) {
+    // Calculate checksum of the received message content
+    unsigned int calculated_checksum = calculate_checksum(msg);
+    return calculated_checksum == received_checksum;
+}
+
+int main() {
+    int sd, n;
+    struct sockaddr_in serv, cli;
+    socklen_t clilen;
+    char msg[MAX_MSG];
+    unsigned int received_checksum;
+
+    // Create a UDP socket
+    sd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sd < 0) {
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set up server address struct
+    memset(&serv, 0, sizeof(serv));
+    serv.sin_family = AF_INET;
+    serv.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv.sin_port = htons(PORT);
+
+    // Bind the socket to the server address
+    if (bind(sd, (struct sockaddr *)&serv, sizeof(serv)) < 0) {
+        perror("bind failed");
+        close(sd);
+        exit(EXIT_FAILURE);
+    }
+
+    // Receive loop
+    while (1) {
+        memset(msg, 0, MAX_MSG);
+        clilen = sizeof(cli);
+
+        // Receiving data with integrity check value
+        n = recvfrom(sd, msg, MAX_MSG - sizeof(received_checksum), 0, (struct sockaddr *)&cli, &clilen);
+        if (n < 0) {
+            perror("recvfrom error");
+            continue;
+        }
+
+        // Extract the checksum from received data
+        memcpy(&received_checksum, msg + n - sizeof(received_checksum), sizeof(received_checksum));
+
+        // Verify the integrity of the received message
+        if (!verify_message_integrity(msg, received_checksum)) {
+            fprintf(stderr, "Integrity check failed for message from %s:%d\n",
+                    inet_ntoa(cli.sin_addr), ntohs(cli.sin_port));
+            continue;
+        }
+
+        // Process the received message
+        printf("Received valid message: %s\n", msg);
+    }
+
+    // Close the socket
+    close(sd);
+    return 0;
+}
+```
+
+In this updated code:
+
+1. A checksum function `calculate_checksum` is implemented to calculate and verify the integrity of the received messages.
+2. The integrity check value (checksum) is transmitted alongside the UDP message and checked upon reception.
+3. To ensure the security of checksums, more sophisticated methods such as HMAC (Hash-Based Message Authentication Code) should be used in real-world applications.

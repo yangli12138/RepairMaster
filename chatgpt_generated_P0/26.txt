@@ -1,0 +1,40 @@
+To address the vulnerability of missing release of resource, we need to ensure that the file pointer is properly closed even if an error occurs during the execution of our program. The solution is to use a cleanup section where the file is closed before every return statement indicating an error. Here's the corrected code:
+
+```c
+#include <stdio.h>
+
+#define BUF_SZ 1024
+#define DECODE_FAIL -1
+#define DECODE_SUCCESS 0
+
+int checkChecksum(const char *buf) {
+    // Assume there's an implementation here
+    return 1; // Placeholder for checksum check
+}
+
+void decodeBlock(const char *buf) {
+    // Assume there's some implementation here
+}
+
+int decodeFile(char* fName) {
+    char buf[BUF_SZ];
+    FILE* f = fopen(fName, "r");
+    if (!f) {
+        printf("cannot open %s\n", fName);
+        return DECODE_FAIL;
+    } else {
+        while (fgets(buf, BUF_SZ, f)) {
+            if (!checkChecksum(buf)) {
+                fclose(f);  // Ensure file is closed before returning due to error
+                return DECODE_FAIL;
+            } else {
+                decodeBlock(buf);
+            }
+        }
+    }
+    fclose(f);  // Ensure file is closed upon successful completion
+    return DECODE_SUCCESS;
+}
+```
+
+In this modified version of the function, `fclose(f)` is now called before any early returns to ensure that the file is properly closed in the event of an error. This resolves the issue of resource leakage.
