@@ -2,7 +2,7 @@
 
 This repository provides an implementation of the method proposed in the paper **“Context-Aware LLM-Based Program Repair Enhanced by Historical Patch Retrieval”**. For more information on data preprocessing, experimental design, and analysis of results, please refer to the relevant chapters in the paper for a more comprehensive understanding of the background and technical details of this research..
 
-![RepairMaster](fig\Fig.png)
+![RepairMaster](fig/Fig.png)
 
 
 ## Resources
