@@ -1,6 +1,12 @@
 # RepairMaster
 
-This repository provides an implementation of the method proposed in the paper **“Context-Aware LLM-Based Program Repair Enhanced by Historical Patch Retrieval”**. For more information on data preprocessing, experimental design, and analysis of results, please refer to the relevant chapters in the paper for a more comprehensive understanding of the background and technical details of this research..
+[![Python](https://img.shields.io/badge/Python-3.8-blue.svg)](https://www.python.org/)[![PyTorch](https://img.shields.io/badge/PyTorch-1.12+-ee4c2c.svg)](https://pytorch.org/)
+
+This repository contains the official implementation of the method proposed in the paper:
+
+> **Context-Aware LLM-Based Program Repair Enhanced by Historical Patch Retrieval**
+
+For comprehensive details on data preprocessing, experimental design, and result analysis, please refer to the relevant chapters in the paper.
 
 ![RepairMaster](fig/Fig.png)
 
